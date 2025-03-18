@@ -1,8 +1,8 @@
-import { createSign, getHashes } from "crypto";
+import { createSign, getHashes, KeyObject } from "crypto";
 import { SigningAlgorithm } from "../algorithms";
 
 export function sign(
-    { data, privateKey, algorithm }: { data: string, privateKey: string, algorithm: SigningAlgorithm }
+    { data, privateKey, algorithm }: { data: string, privateKey: KeyObject, algorithm: SigningAlgorithm }
 ): string {
     // verify that the algorithm is supported
     if (!getHashes().includes(algorithm)) {
