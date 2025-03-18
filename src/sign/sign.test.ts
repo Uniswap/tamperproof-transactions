@@ -13,7 +13,7 @@ describe('sign', () => {
             modulusLength: 2048,
         });
         const data = 'data';
-        const result = sign({ data, privateKey, algorithm: SigningAlgorithm.RSA });
+        const result = sign(data, privateKey, SigningAlgorithm.RSA);
         expect(typeof result).toBe("string");
     });
 });

@@ -19,11 +19,7 @@ export async function verifyAsync(
 }
 
 export function verifySync(
-    {
-        calldata, signature, algorithm, publicKey
-    }: {
-        calldata: string, signature: string, algorithm: SigningAlgorithm, publicKey: KeyObject
-    }
+    calldata: string, signature: string, algorithm: SigningAlgorithm, publicKey: KeyObject
 ): boolean {
     const verify = createVerify(algorithm);
     verify.update(calldata);

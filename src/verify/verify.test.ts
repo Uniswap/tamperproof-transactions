@@ -19,13 +19,13 @@ describe('verify', () => {
             modulusLength: 2048,
         });
         const data = 'data';
-        const result = sign({ data, privateKey, algorithm: SigningAlgorithm.RSA });
-        expect(verifySync({
-            calldata: data,
-            signature: result,
-            algorithm: SigningAlgorithm.RSA,
+        const result = sign(data, privateKey, SigningAlgorithm.RSA);
+        expect(verifySync(
+            data,
+            result,
+            SigningAlgorithm.RSA,
             publicKey
-        })).toBe(true);
+        )).toBe(true);
     });
 
     it('verify returns false for incorrect public key', () => {
@@ -33,7 +33,7 @@ describe('verify', () => {
         const { privateKey: privateKey1 } = generateKeyPairSync('rsa', {
             modulusLength: 2048,
         });
-        
+
         // Generate second key pair (different from first)
         const { publicKey: privateKey2 } = generateKeyPairSync('rsa', {
             modulusLength: 2048,
@@ -41,14 +41,14 @@ describe('verify', () => {
 
         const data = 'data';
         // Sign the data with the first key pair
-        const result = sign({ data, privateKey: privateKey1, algorithm: SigningAlgorithm.RSA });
+        const result = sign(data, privateKey1, SigningAlgorithm.RSA);
 
         // Verify the signature with the different public key
-        expect(verifySync({
-            calldata: data,
-            signature: result,
-            algorithm: SigningAlgorithm.RSA,
-            publicKey: privateKey2  
-        })).toBe(false);
+        expect(verifySync(
+            data,
+            result,
+            SigningAlgorithm.RSA,
+            privateKey2
+        )).toBe(false);
     });
 });
