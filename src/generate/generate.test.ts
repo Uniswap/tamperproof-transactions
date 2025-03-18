@@ -5,7 +5,7 @@ describe('generate', () => {
         expect(typeof generate(
             {
                 key: 'key',
-                algorithm: 'algorithm'
+                algorithm: 'SHA256  '
             }
         )).toBe("string");
     });
