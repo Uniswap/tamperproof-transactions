@@ -1,11 +1,5 @@
 import { createSign, getHashes } from "crypto";
-
-export enum SigningAlgorithm {
-    RSA = "RSA-SHA256",
-    RSA_PSS = "RSA-PSS",
-    ECDSA = "SHA256"
-}
-
+import { SigningAlgorithm } from "../algorithms";
 
 export function sign(
     { data, privateKey, algorithm }: { data: string, privateKey: string, algorithm: SigningAlgorithm }

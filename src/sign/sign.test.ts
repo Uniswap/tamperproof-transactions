@@ -1,9 +1,11 @@
-import { sign, SigningAlgorithm } from './sign';
+import { sign } from './sign';
+import { SigningAlgorithm } from '../algorithms';
+
 const {
     generateKeyPairSync,
     createSign,
     createVerify,
-  } = require('node:crypto');
+} = require('node:crypto');
 
 describe('sign', () => {
     it('should return a string', () => {
@@ -16,4 +18,3 @@ describe('sign', () => {
     });
 });
 
-  
