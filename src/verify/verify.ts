@@ -1,7 +1,8 @@
-import { createSign, createVerify, KeyObject } from "crypto";
+import { createVerify, KeyObject } from "crypto";
 import { SigningAlgorithm } from "../algorithms";
 
-import { resolveTxt } from "dns";
+import dns from "dns";
+const dnsPromises = dns.promises;
 
 
 export const PREFIX = "TWIT=";
@@ -9,35 +10,37 @@ export const PREFIX = "TWIT=";
 export async function verifyAsyncDns(
     calldata: string, signature: string, host: string, id?: number
 ): Promise<boolean> {
-    let txtRecords: string[] = [];
-    resolveTxt(
-        host,
-        res => {
-            txtRecords = res as string[];
-        }
-    );
+    // Convert callback-style to Promise
+    const records = await dnsPromises.resolveTxt(host);
 
-    let twistRecord: string | undefined;
-    txtRecords.forEach(record => {
-        if (record.startsWith(PREFIX)) {
-            twistRecord = record;
-        }
-    });
-
-    if (!twistRecord) {
-        throw new Error(`No TXT record found for host ${host}`);
+    if (!records || records.length === 0) {
+        throw new Error(`No TXT records found for host ${host}`);
     }
 
-    return verifyAsyncJson(calldata, signature, twistRecord.slice(PREFIX.length)[0], id);
+    const [address] = records;
+    let twistRecord: string | undefined;
 
-    // const publicKey = await fetch(url).then(res => res.json());
-    // return verifySync(calldata, signature, publicKey.algorithm, publicKey.key);
+    // return the first record that starts with the prefix
+    for (const record of address) {
+        if (record.startsWith(PREFIX)) {
+            twistRecord = record.slice(PREFIX.length);
+            break;
+        }
+    }
+
+    if (!twistRecord) {
+        throw new Error(`No TXT record found with prefix ${PREFIX} for host ${host}`);
+    }
+
+    return await verifyAsyncJson(calldata, signature, twistRecord, id);
 }
 
 export async function verifyAsyncJson(
     calldata: string, signature: string, url: string, id?: number
 ): Promise<boolean> {
-    const publicKeys = await fetch(url).then(res => res.publicKeys);
+    // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
+    const response = await fetch(url);
+    const publicKeys = await response.json() as Array<{algorithm: SigningAlgorithm, key: KeyObject}>;
     const publicKey = id ? publicKeys[id] : publicKeys[0];
 
     return verifySync(calldata, signature, publicKey.algorithm, publicKey.key);

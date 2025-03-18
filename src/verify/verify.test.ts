@@ -1,21 +1,61 @@
-import { verifyAsync, verifySync } from './verify';
+// Move mock before imports
+jest.mock('dns', () => ({
+    promises: {
+        resolveTxt: jest.fn()
+    }
+}));
+
+import { PREFIX, verifyAsyncDns, verifyAsyncJson, verifySync } from './verify';
 import { SigningAlgorithm } from '../algorithms';
 import { generateKeyPairSync } from 'crypto';
 import { sign } from '../sign/sign';
-
+import dns from 'dns';
 
 describe('verify', () => {
-    it.skip('verify returns false', async () => {
-        expect(await verifyAsync({
-            calldata: '0x',
-            signature: '0x',
-            algorithm: SigningAlgorithm.RSA,
-            url: 'https://example.com',
-        })).toBe(false);
+    describe('verifyAsyncDns', () => {
+        beforeEach(() => {
+            // Clear mock between tests
+            (dns.promises.resolveTxt as jest.Mock).mockClear();
+        });
+
+        it('throws error if DNS resolution fails', async () => {
+            (dns.promises.resolveTxt as jest.Mock).mockRejectedValue(
+                new Error('DNS resolution failed')
+            );
+
+            await expect(verifyAsyncDns(
+                'data',
+                'signature',
+                'example.com'
+            )).rejects.toThrow('DNS resolution failed');
+        });
+
+        it('throws error if no TXT records are found', async () => {
+            (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([]);
+
+            await expect(verifyAsyncDns(
+                'data',
+                'signature',
+                'example.com'
+            )).rejects.toThrow('No TXT records found for host example.com');
+        });
+
+        it('throws error if no record with PREFIX is found', async () => {
+            (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([
+                ['WRONG_PREFIX=somedata']
+            ]);
+
+            await expect(verifyAsyncDns(
+                'data',
+                'signature',
+                'example.com'
+            )).rejects.toThrow(`No TXT record found with prefix ${PREFIX} for host example.com`);
+        });
     });
 
-    it('verify returns true', () => {
-        const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+    describe('verifySync', () => {
+        it('returns true for correct public key', () => {
+            const { privateKey, publicKey } = generateKeyPairSync('rsa', {
             modulusLength: 2048,
         });
         const data = 'data';
@@ -26,11 +66,11 @@ describe('verify', () => {
             SigningAlgorithm.RSA,
             publicKey
         )).toBe(true);
-    });
+        });
 
-    it('verify returns false for incorrect public key', () => {
-        // Generate first key pair
-        const { privateKey: privateKey1 } = generateKeyPairSync('rsa', {
+        it('returns false for incorrect public key', () => {
+            // Generate first key pair
+            const { privateKey: privateKey1 } = generateKeyPairSync('rsa', {
             modulusLength: 2048,
         });
 
@@ -45,10 +85,11 @@ describe('verify', () => {
 
         // Verify the signature with the different public key
         expect(verifySync(
-            data,
-            result,
-            SigningAlgorithm.RSA,
-            privateKey2
-        )).toBe(false);
+                data,
+                result,
+                SigningAlgorithm.RSA,
+                privateKey2
+            )).toBe(false);
+        });
     });
 });
