@@ -1,5 +1,14 @@
+import { createSign, getHashes, KeyObject } from "crypto";
+import { SigningAlgorithm } from "../algorithms";
+
 export function sign(
-    { data, privateKey }: { data: string, privateKey: string }
+    data: string, privateKey: KeyObject, algorithm: SigningAlgorithm
 ): string {
-    return "Not implemented";
+    // verify that the algorithm is supported
+    if (!getHashes().includes(algorithm)) {
+        throw new Error(`Algorithm ${algorithm} is not supported`);
+    }
+    const signer = createSign(algorithm);
+    signer.update(data);
+    return signer.sign(privateKey, "hex");
 }
