@@ -16,6 +16,10 @@
     "build": "tsc",
     "test": "jest"
   },
+  "publishConfig": {
+    "access": "restricted",
+    "provenance": true
+  },
   "dependencies": {
     "crypto": "^1.0.1"
   }
