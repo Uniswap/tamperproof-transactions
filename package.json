@@ -1,5 +1,5 @@
 {
-  "name": "tamperproof-transactions",
+  "name": "@uniswap/tamperproof-transactions",
   "version": "1.0.0",
   "main": "index.js",
   "repository": "git@github.com:Uniswap/tamperproof-transactions.git",
