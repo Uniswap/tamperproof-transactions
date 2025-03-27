@@ -5,7 +5,7 @@ import dns from "dns";
 const dnsPromises = dns.promises;
 
 
-export const PREFIX = "TWIT=";
+export const PREFIX = "TWIST=";
 
 export async function verifyAsyncDns(
     calldata: string, signature: string, host: string, id?: number
@@ -40,7 +40,7 @@ export async function verifyAsyncJson(
 ): Promise<boolean> {
     // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
     const response = await fetch(url);
-    const publicKeys = await response.json() as Array<{algorithm: SigningAlgorithm, key: KeyObject}>;
+    const publicKeys = await response.json() as Array<{ algorithm: SigningAlgorithm, key: KeyObject }>;
     const publicKey = id ? publicKeys[id] : publicKeys[0];
 
     return verifySync(calldata, signature, publicKey.algorithm, publicKey.key);
