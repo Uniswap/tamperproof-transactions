@@ -2,6 +2,7 @@
   "name": "@uniswap/tamperproof-transactions",
   "version": "1.0.3",
   "main": "index.js",
+  "types": "dist/index.d.ts",
   "repository": "git@github.com:Uniswap/tamperproof-transactions.git",
   "author": "mr <morgan.roman@uniswap.org>",
   "license": "MIT",
