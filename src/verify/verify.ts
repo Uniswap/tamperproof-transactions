@@ -5,7 +5,7 @@ import dns from "dns";
 const dnsPromises = dns.promises;
 
 
-export const PREFIX = "TWIST=";
+export const PREFIX = "TWIT=";
 
 export async function verifyAsyncDns(
     calldata: string, signature: string, host: string, id?: number
@@ -18,21 +18,21 @@ export async function verifyAsyncDns(
     }
 
     const [address] = records;
-    let twistRecord: string | undefined;
+    let twitRecord: string | undefined;
 
     // return the first record that starts with the prefix
     for (const record of address) {
         if (record.startsWith(PREFIX)) {
-            twistRecord = record.slice(PREFIX.length);
+            twitRecord = record.slice(PREFIX.length);
             break;
         }
     }
 
-    if (!twistRecord) {
+    if (!twitRecord) {
         throw new Error(`No TXT record found with prefix ${PREFIX} for host ${host}`);
     }
 
-    return await verifyAsyncJson(calldata, signature, twistRecord, id);
+    return await verifyAsyncJson(calldata, signature, twitRecord, id);
 }
 
 export async function verifyAsyncJson(
