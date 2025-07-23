@@ -1,15 +1,15 @@
 {
   "name": "@uniswap/tamperproof-transactions",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "main": "index.js",
   "types": "dist/index.d.ts",
   "repository": "git@github.com:Uniswap/tamperproof-transactions.git",
-  "author": "mr <morgan.roman@uniswap.org>",
+  "author": "Uniswap Labs Security <security@uniswap.org>",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.10",
-    "jest": "^29.7.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.1.0",
+    "jest": "^30.0.5",
     "ts-jest": "^29.2.5",
     "typescript": "^5.7.3"
   },
