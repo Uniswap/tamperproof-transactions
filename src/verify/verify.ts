@@ -1,4 +1,4 @@
-import { createVerify, KeyObject } from "crypto";
+import { createPublicKey, createVerify, KeyObject } from "crypto";
 import { SigningAlgorithm } from "../algorithms";
 
 import dns from "dns";
@@ -40,10 +40,14 @@ export async function verifyAsyncJson(
 ): Promise<boolean> {
     // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
     const response = await fetch(url);
-    const publicKeys = await response.json() as Array<{ algorithm: SigningAlgorithm, key: KeyObject }>;
+    const publicKeys = await response.json() as Array<{ algorithm: string, key: string }>;
     const publicKey = id ? publicKeys[id] : publicKeys[0];
 
-    return verifySync(calldata, signature, publicKey.algorithm, publicKey.key);
+    if (!Object.values(SigningAlgorithm).includes(publicKey.algorithm as SigningAlgorithm)) {
+        throw new Error(`Unsupported algorithm: ${publicKey.algorithm}`);
+    }
+
+    return verifySync(calldata, signature, publicKey.algorithm as SigningAlgorithm, createPublicKey(publicKey.key));
 }
 
 export function verifySync(
