@@ -20,8 +20,5 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
-  },
-  "dependencies": {
-    "crypto": "^1.0.1"
   }
 }
