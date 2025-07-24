@@ -1,14 +1,17 @@
-import { createSign, getHashes, KeyObject } from "crypto";
-import { SigningAlgorithm } from "../algorithms";
+import { webcrypto } from "crypto";
+import { SIGNING_ALGORITHMS, isSigningAlgorithm } from "../algorithms";
 
-export function sign(
-    data: string, privateKey: KeyObject, algorithm: SigningAlgorithm
-): string {
+export async function sign(
+    data: string, privateKey: webcrypto.CryptoKey, algorithm: keyof typeof SIGNING_ALGORITHMS
+): Promise<string> {
     // verify that the algorithm is supported
-    if (!getHashes().includes(algorithm)) {
+    if (!isSigningAlgorithm(algorithm)) {
         throw new Error(`Algorithm ${algorithm} is not supported`);
     }
-    const signer = createSign(algorithm);
-    signer.update(data);
-    return signer.sign(privateKey, "hex");
+
+    const encoder = new TextEncoder();
+    const bufferData = encoder.encode(data);
+
+    const signature = await webcrypto.subtle.sign(SIGNING_ALGORITHMS[algorithm], privateKey, bufferData);
+    return Buffer.from(signature).toString('hex');
 }
