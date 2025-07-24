@@ -1,60 +1,82 @@
-import { createPublicKey, createVerify, KeyObject } from "crypto";
-import { SigningAlgorithm } from "../algorithms";
+import { createPublicKey, createVerify, KeyObject } from 'crypto';
+import { SigningAlgorithm } from '../algorithms';
 
-import dns from "dns";
+import dns from 'dns';
 const dnsPromises = dns.promises;
 
-
-export const PREFIX = "TWIST=";
+export const PREFIX = 'TWIST=';
 
 export async function verifyAsyncDns(
-    calldata: string, signature: string, host: string, id?: number
+  calldata: string,
+  signature: string,
+  host: string,
+  id?: number
 ): Promise<boolean> {
-    // Convert callback-style to Promise
-    const records = await dnsPromises.resolveTxt(host);
+  // Convert callback-style to Promise
+  const records = await dnsPromises.resolveTxt(host);
 
-    if (!records || records.length === 0) {
-        throw new Error(`No TXT records found for host ${host}`);
+  if (!records || records.length === 0) {
+    throw new Error(`No TXT records found for host ${host}`);
+  }
+
+  const [address] = records;
+  let twistRecord: string | undefined;
+
+  // return the first record that starts with the prefix
+  for (const record of address) {
+    if (record.startsWith(PREFIX)) {
+      twistRecord = record.slice(PREFIX.length);
+      break;
     }
+  }
 
-    const [address] = records;
-    let twistRecord: string | undefined;
+  if (!twistRecord) {
+    throw new Error(
+      `No TXT record found with prefix ${PREFIX} for host ${host}`
+    );
+  }
 
-    // return the first record that starts with the prefix
-    for (const record of address) {
-        if (record.startsWith(PREFIX)) {
-            twistRecord = record.slice(PREFIX.length);
-            break;
-        }
-    }
-
-    if (!twistRecord) {
-        throw new Error(`No TXT record found with prefix ${PREFIX} for host ${host}`);
-    }
-
-    return await verifyAsyncJson(calldata, signature, twistRecord, id);
+  return await verifyAsyncJson(calldata, signature, twistRecord, id);
 }
 
 export async function verifyAsyncJson(
-    calldata: string, signature: string, url: string, id?: number
+  calldata: string,
+  signature: string,
+  url: string,
+  id?: number
 ): Promise<boolean> {
-    // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
-    const response = await fetch(url);
-    const publicKeys = await response.json() as Array<{ algorithm: string, key: string }>;
-    const publicKey = id ? publicKeys[id] : publicKeys[0];
+  // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
+  const response = await fetch(url);
+  const publicKeys = (await response.json()) as Array<{
+    algorithm: string;
+    key: string;
+  }>;
+  const publicKey = id ? publicKeys[id] : publicKeys[0];
 
-    if (!Object.values(SigningAlgorithm).includes(publicKey.algorithm as SigningAlgorithm)) {
-        throw new Error(`Unsupported algorithm: ${publicKey.algorithm}`);
-    }
+  if (
+    !Object.values(SigningAlgorithm).includes(
+      publicKey.algorithm as SigningAlgorithm
+    )
+  ) {
+    throw new Error(`Unsupported algorithm: ${publicKey.algorithm}`);
+  }
 
-    return verifySync(calldata, signature, publicKey.algorithm as SigningAlgorithm, createPublicKey(publicKey.key));
+  return verifySync(
+    calldata,
+    signature,
+    publicKey.algorithm as SigningAlgorithm,
+    createPublicKey(publicKey.key)
+  );
 }
 
 export function verifySync(
-    calldata: string, signature: string, algorithm: SigningAlgorithm, publicKey: KeyObject
+  calldata: string,
+  signature: string,
+  algorithm: SigningAlgorithm,
+  publicKey: KeyObject
 ): boolean {
-    const verify = createVerify(algorithm);
-    verify.update(calldata);
-    verify.end();
-    return verify.verify(publicKey, signature, "hex");
+  const verify = createVerify(algorithm);
+  verify.update(calldata);
+  verify.end();
+  return verify.verify(publicKey, signature, 'hex');
 }
