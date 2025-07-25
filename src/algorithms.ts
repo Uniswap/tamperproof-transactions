@@ -1,4 +1,18 @@
-export const SIGNING_ALGORITHMS = {
+export type SigningAlgorithm = {
+  name: string;
+  hash?: { name: string };
+  saltLength?: number;
+};
+
+export const SIGNING_ALGORITHM_NAMES: Record<string, string> = {
+  ECDSA: 'ECDSA',
+  Ed25519: 'Ed25519',
+  RSA_PSS: 'RSA-PSS',
+  RSASSA_PKCS1_v1_5: 'RSASSA-PKCS1-v1_5',
+  Ed448: 'Ed448',
+} as const;
+
+export const SIGNING_ALGORITHMS: Record<string, SigningAlgorithm> = {
   ECDSA: {
     name: 'ECDSA',
     hash: { name: 'SHA-256' },
