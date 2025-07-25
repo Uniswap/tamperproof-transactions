@@ -1,12 +1,7 @@
 module.exports = {
-  semi: true,
-  trailingComma: 'es5',
+  bracketSameLine: false,
   singleQuote: true,
-  printWidth: 80,
-  tabWidth: 2,
-  useTabs: false,
-  quoteProps: 'as-needed',
-  bracketSpacing: true,
-  arrowParens: 'avoid',
-  endOfLine: 'lf',
-}; 
+  printWidth: 120,
+  semi: false,
+  plugins: ['prettier-plugin-organize-imports'],
+};

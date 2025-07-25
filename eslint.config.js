@@ -21,7 +21,7 @@ export default [
     rules: {
       // Prettier formatting
       'prettier/prettier': 'error',
-      
+
       // TypeScript specific rules
       '@typescript-eslint/interface-name-prefix': 'off',
       '@typescript-eslint/explicit-function-return-type': 'error',
@@ -29,7 +29,7 @@ export default [
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-inferrable-types': 'off',
-      
+
       // Security and crypto-specific rules
       'no-console': 'warn',
       'no-debugger': 'error',
@@ -37,7 +37,7 @@ export default [
       'no-implied-eval': 'error',
       'no-new-func': 'error',
       'no-script-url': 'error',
-      
+
       // Code quality
       'prefer-const': 'error',
       'no-var': 'error',
@@ -45,13 +45,13 @@ export default [
       'prefer-arrow-callback': 'error',
       'prefer-template': 'error',
       'no-duplicate-imports': 'error',
-      
+
       // Error prevention
       'no-unreachable': 'error',
       'no-unused-expressions': 'error',
       'no-throw-literal': 'error',
       'require-await': 'error',
-      
+
       // Extend recommended rules
       ...typescriptEslint.configs.recommended.rules,
       ...typescriptEslint.configs['recommended-requiring-type-checking'].rules,
@@ -92,4 +92,4 @@ export default [
   {
     ignores: ['dist/**', 'node_modules/**', 'eslint.config.js'],
   },
-]; 
+];
