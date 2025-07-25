@@ -1,4 +1,5 @@
 # tamperproof-transactions
+
 Implementation of EIP-7754
 
 ## Installation
@@ -15,9 +16,9 @@ npm install @uniswap/tamperproof-transactions
 
 ```ts
 export enum SigningAlgorithm {
-  RSA = "RSA-SHA256",
-  RSA_PSS = "RSA-PSS",
-  ECDSA = "SHA256"
+  RSA = 'RSA-SHA256',
+  RSA_PSS = 'RSA-PSS',
+  ECDSA = 'SHA256',
 }
 ```
 
@@ -47,10 +48,16 @@ Verifies a signature synchronously.
 #### Example
 
 ```ts
-import { sign, verifySync, SigningAlgorithm } from '@uniswap/tamperproof-transactions';
+import {
+  sign,
+  verifySync,
+  SigningAlgorithm,
+} from '@uniswap/tamperproof-transactions';
 import { generateKeyPairSync } from 'crypto';
 
-const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+  modulusLength: 2048,
+});
 const data = 'hello world';
 const signature = sign(data, privateKey, SigningAlgorithm.RSA);
 
@@ -82,7 +89,11 @@ Verifies a signature by fetching a public key from a JSON endpoint.
 ```ts
 import { verifyAsyncJson } from '@uniswap/tamperproof-transactions';
 
-const isValid = await verifyAsyncJson('data', 'signature', 'https://example.com/keys.json');
+const isValid = await verifyAsyncJson(
+  'data',
+  'signature',
+  'https://example.com/keys.json'
+);
 ```
 
 ---
@@ -107,7 +118,7 @@ import { generate, SigningAlgorithm } from '@uniswap/tamperproof-transactions';
 
 const publicKey = {
   key: 'hex-encoded-key',
-  algorithm: SigningAlgorithm.RSA
+  algorithm: SigningAlgorithm.RSA,
 };
 
 const json = generate(publicKey);
@@ -118,4 +129,3 @@ const json = generate(publicKey);
 ## License
 
 MIT
-
