@@ -22,7 +22,7 @@ module.exports = {
   rules: {
     // Prettier formatting
     'prettier/prettier': 'error',
-    
+
     // TypeScript specific rules
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'error',
@@ -31,7 +31,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/prefer-const': 'error',
     '@typescript-eslint/no-inferrable-types': 'off',
-    
+
     // Security and crypto-specific rules
     'no-console': 'warn',
     'no-debugger': 'error',
@@ -39,7 +39,7 @@ module.exports = {
     'no-implied-eval': 'error',
     'no-new-func': 'error',
     'no-script-url': 'error',
-    
+
     // Code quality
     'prefer-const': 'error',
     'no-var': 'error',
@@ -47,11 +47,11 @@ module.exports = {
     'prefer-arrow-callback': 'error',
     'prefer-template': 'error',
     'no-duplicate-imports': 'error',
-    
+
     // Error prevention
     'no-unreachable': 'error',
     'no-unused-expressions': 'error',
     'no-throw-literal': 'error',
     'require-await': 'error',
   },
-}; 
+};

@@ -1,5 +1,5 @@
 import { createPublicKey, createVerify, KeyObject } from 'crypto';
-import { SigningAlgorithm } from '../algorithms';
+import { SigningAlgorithm, isSigningAlgorithm } from '../algorithms';
 
 import dns from 'dns';
 const dnsPromises = dns.promises;
@@ -53,11 +53,7 @@ export async function verifyAsyncJson(
   }>;
   const publicKey = id ? publicKeys[id] : publicKeys[0];
 
-  if (
-    !Object.values(SigningAlgorithm).includes(
-      publicKey.algorithm as SigningAlgorithm
-    )
-  ) {
+  if (!isSigningAlgorithm(publicKey.algorithm)) {
     throw new Error(`Unsupported algorithm: ${publicKey.algorithm}`);
   }
 
