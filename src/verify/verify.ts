@@ -1,5 +1,5 @@
 import { createPublicKey, createVerify, KeyObject } from 'crypto';
-import { SigningAlgorithm, isSigningAlgorithm } from '../algorithms';
+import { SigningAlgorithmName, isSigningAlgorithm } from '../algorithms';
 
 import dns from 'dns';
 const dnsPromises = dns.promises;
@@ -60,7 +60,7 @@ export async function verifyAsyncJson(
   return verifySync(
     calldata,
     signature,
-    publicKey.algorithm as SigningAlgorithm,
+    publicKey.algorithm,
     createPublicKey(publicKey.key)
   );
 }
@@ -68,7 +68,7 @@ export async function verifyAsyncJson(
 export function verifySync(
   calldata: string,
   signature: string,
-  algorithm: SigningAlgorithm,
+  algorithm: SigningAlgorithmName,
   publicKey: KeyObject
 ): boolean {
   const verify = createVerify(algorithm);

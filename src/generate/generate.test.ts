@@ -1,5 +1,5 @@
 import { generateKeyPairSync } from 'crypto';
-import { SigningAlgorithm } from '../algorithms';
+import { SigningAlgorithmConfig, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 import { generate } from './generate';
 
 describe('generate', () => {
@@ -10,7 +10,7 @@ describe('generate', () => {
     expect(
       typeof generate({
         key: publicKey.export({ type: 'spki', format: 'der' }).toString('hex'),
-        algorithm: SigningAlgorithm.RSASSA_PKCS1_v1_5,
+        algorithm: SIGNING_ALGORITHM_CONFIG['RSASSA-PKCS1-v1_5'],
       })
     ).toBe('string');
   });
