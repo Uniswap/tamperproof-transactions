@@ -1,6 +1,6 @@
 import { sign } from './sign';
 import { webcrypto } from 'crypto';
-import { SIGNING_ALGORITHM_NAMES } from '../algorithms';
+import { SigningAlgorithmName } from '../algorithms';
 
 let data: string;
 let privateKeyRSA!: webcrypto.CryptoKey;
@@ -84,7 +84,7 @@ describe('sign', () => {
       const result = await sign(
         data,
         privateKeyRSA,
-        SIGNING_ALGORITHM_NAMES.RSASSA_PKCS1_v1_5
+        SigningAlgorithmName.RSASSA_PKCS1_v1_5
       );
 
       expect(result).toBe(
@@ -98,7 +98,7 @@ describe('sign', () => {
       const result = await sign(
         data,
         privateKeyRSA_PSS,
-        SIGNING_ALGORITHM_NAMES.RSA_PSS
+        SigningAlgorithmName.RSA_PSS
       );
 
       expect(typeof result).toBe('string');
@@ -108,12 +108,12 @@ describe('sign', () => {
       const result1 = await sign(
         data,
         privateKeyRSA_PSS,
-        SIGNING_ALGORITHM_NAMES.RSA_PSS
+        SigningAlgorithmName.RSA_PSS
       );
       const result2 = await sign(
         data,
         privateKeyRSA_PSS,
-        SIGNING_ALGORITHM_NAMES.RSA_PSS
+        SigningAlgorithmName.RSA_PSS
       );
 
       expect(result1).not.toBe(result2);
@@ -125,7 +125,7 @@ describe('sign', () => {
       const result = await sign(
         data,
         privateKeyECDSA,
-        SIGNING_ALGORITHM_NAMES.ECDSA
+        SigningAlgorithmName.ECDSA
       );
 
       expect(typeof result).toBe('string');
@@ -135,12 +135,12 @@ describe('sign', () => {
       const result1 = await sign(
         data,
         privateKeyECDSA,
-        SIGNING_ALGORITHM_NAMES.ECDSA
+        SigningAlgorithmName.ECDSA
       );
       const result2 = await sign(
         data,
         privateKeyECDSA,
-        SIGNING_ALGORITHM_NAMES.ECDSA
+        SigningAlgorithmName.ECDSA
       );
 
       expect(result1).not.toBe(result2);
@@ -152,7 +152,7 @@ describe('sign', () => {
       const result = await sign(
         data,
         privateKeyEd25519,
-        SIGNING_ALGORITHM_NAMES.Ed25519
+        SigningAlgorithmName.Ed25519
       );
 
       expect(result).toBe(
@@ -166,7 +166,7 @@ describe('sign', () => {
       const result = await sign(
         data,
         privateKeyEd448,
-        SIGNING_ALGORITHM_NAMES.Ed448
+        SigningAlgorithmName.Ed448
       );
 
       expect(result).toBe(
