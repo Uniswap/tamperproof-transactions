@@ -1,10 +1,10 @@
 import { webcrypto } from 'crypto';
-import { SIGNING_ALGORITHMS, isSigningAlgorithm } from '../algorithms';
+import { SIGNING_ALGORITHM_CONFIG, isSigningAlgorithm } from '../algorithms';
 
 export async function sign(
   data: string,
   privateKey: webcrypto.CryptoKey,
-  algorithm: keyof typeof SIGNING_ALGORITHMS
+  algorithm: keyof typeof SIGNING_ALGORITHM_CONFIG
 ): Promise<string> {
   // verify that the algorithm is supported
   if (!isSigningAlgorithm(algorithm)) {
@@ -15,7 +15,7 @@ export async function sign(
   const bufferData = encoder.encode(data);
 
   const signature = await webcrypto.subtle.sign(
-    SIGNING_ALGORITHMS[algorithm],
+    SIGNING_ALGORITHM_CONFIG[algorithm],
     privateKey,
     bufferData
   );

@@ -1,7 +1,7 @@
-import { SigningAlgorithm } from '../algorithms';
+import { SigningAlgorithmConfig } from '../algorithms';
 export type PublicKey = {
   key: string;
-  algorithm: SigningAlgorithm;
+  algorithm: SigningAlgorithmConfig;
 };
 
 export function generate(...publicKeys: PublicKey[]): string {
