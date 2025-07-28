@@ -6,6 +6,8 @@ let data: string;
 let privateKeyRSA!: webcrypto.CryptoKey;
 let privateKeyRSA_PSS!: webcrypto.CryptoKey;
 let privateKeyECDSA!: webcrypto.CryptoKey;
+let privateKeyEd25519!: webcrypto.CryptoKey;
+let privateKeyEd448!: webcrypto.CryptoKey;
 
 describe('sign', () => {
   beforeAll(async () => {
@@ -45,6 +47,36 @@ describe('sign', () => {
       ['sign', 'verify']
     );
     privateKeyECDSA = ecdsaKeyPair.privateKey;
+
+    // Fixed Ed25519 private key for deterministic testing
+    const ed25519PrivateKeyBuffer = Buffer.from(
+      '302e020100300506032b657004220420d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842',
+      'hex'
+    );
+    privateKeyEd25519 = await webcrypto.subtle.importKey(
+      'pkcs8',
+      ed25519PrivateKeyBuffer,
+      {
+        name: 'Ed25519',
+      },
+      false,
+      ['sign']
+    );
+
+    // Fixed Ed448 private key for deterministic testing
+    const ed448PrivateKeyBuffer = Buffer.from(
+      '3047020100300506032b6571043b0439d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842a69b9dc13ee02a4b9dc13ee02a4b9dc13ee02a4b9dc13ee02a4',
+      'hex'
+    );
+    privateKeyEd448 = await webcrypto.subtle.importKey(
+      'pkcs8',
+      ed448PrivateKeyBuffer,
+      {
+        name: 'Ed448',
+      },
+      false,
+      ['sign']
+    );
   });
 
   describe('RSASSA-PKCS1-v1_5', () => {
@@ -112,6 +144,34 @@ describe('sign', () => {
       );
 
       expect(result1).not.toBe(result2);
+    });
+  });
+
+  describe('Ed25519', () => {
+    it('should return expected signature', async () => {
+      const result = await sign(
+        data,
+        privateKeyEd25519,
+        SIGNING_ALGORITHM_NAMES.Ed25519
+      );
+
+      expect(result).toBe(
+        '0804a2a72f52d7afdaf18b78e1a48891a729be1bdde2b30366fd00a128bc37243aa75c36e8b0a93b71fe7dfd7b67bee0838e25acd26b8a81ad7074ae38f84102'
+      );
+    });
+  });
+
+  describe('Ed448', () => {
+    it('should return expected signature', async () => {
+      const result = await sign(
+        data,
+        privateKeyEd448,
+        SIGNING_ALGORITHM_NAMES.Ed448
+      );
+
+      expect(result).toBe(
+        '5b8538163d88064b524ad596292eed220621ca41c17f4c8cef31e2ee7ca497f0d0533acdb31a441f007ac5f9f6e1143b3197b5d5b306066400dfab50dcab37e2e9f9a6b1468d60dd922f5edbae8661627423fb4d60448f7f0a06e59e1d1426f773a7c4ae3c07599fad6cc71464e8dbb20400'
+      );
     });
   });
 
