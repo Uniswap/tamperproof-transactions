@@ -48,7 +48,6 @@ describe('sign', () => {
     );
     privateKeyECDSA = ecdsaKeyPair.privateKey;
 
-    // Fixed Ed25519 private key for deterministic testing
     const ed25519PrivateKeyBuffer = Buffer.from(
       '302e020100300506032b657004220420d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842',
       'hex'
@@ -63,7 +62,6 @@ describe('sign', () => {
       ['sign']
     );
 
-    // Fixed Ed448 private key for deterministic testing
     const ed448PrivateKeyBuffer = Buffer.from(
       '3047020100300506032b6571043b0439d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842a69b9dc13ee02a4b9dc13ee02a4b9dc13ee02a4b9dc13ee02a4',
       'hex'
