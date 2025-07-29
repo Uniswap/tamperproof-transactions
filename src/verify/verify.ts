@@ -1,4 +1,4 @@
-import { createPublicKey, createVerify, KeyObject } from 'crypto';
+import { createPublicKey, createVerify, KeyObject, webcrypto } from 'crypto';
 import { SigningAlgorithmName, isSigningAlgorithm } from '../algorithms';
 
 import dns from 'dns';
@@ -56,6 +56,14 @@ export async function verifyAsyncJson(
   if (!isSigningAlgorithm(publicKey.algorithm)) {
     throw new Error(`Unsupported algorithm: ${publicKey.algorithm}`);
   }
+
+  const publicKeyObject = await webcrypto.CryptoKey.subtle.importKey(
+    'spki',
+    publicKey.key,
+    { name: publicKey.algorithm },
+    false,
+    ['verify']
+  );
 
   return verifySync(
     calldata,
