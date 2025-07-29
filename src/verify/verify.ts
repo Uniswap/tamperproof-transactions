@@ -1,5 +1,9 @@
-import { createPublicKey, createVerify, KeyObject, webcrypto } from 'crypto';
-import { SigningAlgorithmName, isSigningAlgorithm } from '../algorithms';
+import { webcrypto } from 'crypto';
+import {
+  SigningAlgorithmName,
+  isSigningAlgorithm,
+  SIGNING_ALGORITHM_CONFIG,
+} from '../algorithms';
 
 import dns from 'dns';
 const dnsPromises = dns.promises;
@@ -57,30 +61,52 @@ export async function verifyAsyncJson(
     throw new Error(`Unsupported algorithm: ${publicKey.algorithm}`);
   }
 
-  const publicKeyObject = await webcrypto.CryptoKey.subtle.importKey(
-    'spki',
-    publicKey.key,
+  const publicKeyObject = await webcrypto.subtle.importKey(
+    'raw',
+    Buffer.from(publicKey.key, 'hex'),
     { name: publicKey.algorithm },
     false,
     ['verify']
   );
 
-  return verifySync(
+  return await verify(
     calldata,
     signature,
     publicKey.algorithm,
-    createPublicKey(publicKey.key)
+    publicKeyObject
   );
 }
 
-export function verifySync(
+export async function verify(
   calldata: string,
   signature: string,
   algorithm: SigningAlgorithmName,
-  publicKey: KeyObject
-): boolean {
-  const verify = createVerify(algorithm);
-  verify.update(calldata);
-  verify.end();
-  return verify.verify(publicKey, signature, 'hex');
+  publicKey: webcrypto.CryptoKey
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const bufferData = encoder.encode(calldata);
+
+  const signatureBuffer = Buffer.from(signature, 'hex');
+  const signatureUint8Array = new Uint8Array(signatureBuffer);
+
+  return await verifyInternal(
+    bufferData,
+    signatureUint8Array,
+    algorithm,
+    publicKey
+  );
+}
+
+export async function verifyInternal(
+  calldata: ArrayBufferView | ArrayBuffer,
+  signature: ArrayBufferView | ArrayBuffer,
+  algorithm: SigningAlgorithmName,
+  publicKey: webcrypto.CryptoKey
+): Promise<boolean> {
+  return await webcrypto.subtle.verify(
+    SIGNING_ALGORITHM_CONFIG[algorithm],
+    publicKey,
+    signature,
+    calldata
+  );
 }
