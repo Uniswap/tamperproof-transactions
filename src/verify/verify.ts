@@ -4,6 +4,7 @@ import {
   isSigningAlgorithm,
   SIGNING_ALGORITHM_CONFIG,
 } from '../algorithms';
+import { fromHex } from '../utils/hex';
 
 import dns from 'dns';
 const dnsPromises = dns.promises;
@@ -63,7 +64,7 @@ export async function verifyAsyncJson(
 
   const publicKeyObject = await webcrypto.subtle.importKey(
     'raw',
-    Buffer.from(publicKey.key, 'hex'),
+    fromHex(publicKey.key),
     { name: publicKey.algorithm },
     false,
     ['verify']
@@ -86,27 +87,12 @@ export async function verify(
   const encoder = new TextEncoder();
   const bufferData = encoder.encode(calldata);
 
-  const signatureBuffer = Buffer.from(signature, 'hex');
-  const signatureUint8Array = new Uint8Array(signatureBuffer);
+  const signatureUint8Array = fromHex(signature);
 
-  return await verifyInternal(
-    bufferData,
-    signatureUint8Array,
-    algorithm,
-    publicKey
-  );
-}
-
-export async function verifyInternal(
-  calldata: ArrayBufferView | ArrayBuffer,
-  signature: ArrayBufferView | ArrayBuffer,
-  algorithm: SigningAlgorithmName,
-  publicKey: webcrypto.CryptoKey
-): Promise<boolean> {
   return await webcrypto.subtle.verify(
     SIGNING_ALGORITHM_CONFIG[algorithm],
     publicKey,
-    signature,
-    calldata
+    signatureUint8Array,
+    bufferData
   );
 }
