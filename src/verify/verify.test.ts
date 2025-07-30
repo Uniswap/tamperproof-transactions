@@ -5,13 +5,13 @@ jest.mock('dns', () => ({
   },
 }));
 
-import { verify, verifyInternal } from './verify';
+import { verify } from './verify';
+import { toHex } from '../utils/hex';
 import { SigningAlgorithmName, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 import { webcrypto } from 'crypto';
 import dns from 'dns';
 
-const enc = new TextEncoder();
-const data = enc.encode('data');
+const data = 'data';
 let ecdsaKeyPair: webcrypto.CryptoKeyPair;
 let ed25519KeyPair: webcrypto.CryptoKeyPair;
 let rsaSSAKeyPair: webcrypto.CryptoKeyPair;
@@ -108,13 +108,14 @@ describe('verify', () => {
         const signature = await webcrypto.subtle.sign(
           SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.ECDSA],
           privateKey,
-          data
+          new TextEncoder().encode(data)
         );
+        const signatureString = toHex(signature);
 
         expect(
-          await verifyInternal(
+          await verify(
             data,
-            signature,
+            signatureString,
             SigningAlgorithmName.ECDSA,
             publicKey
           )
@@ -126,13 +127,14 @@ describe('verify', () => {
         const signature = await webcrypto.subtle.sign(
           SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.Ed25519],
           privateKey,
-          data
+          new TextEncoder().encode(data)
         );
+        const signatureString = toHex(signature);
 
         expect(
-          await verifyInternal(
+          await verify(
             data,
-            signature,
+            signatureString,
             SigningAlgorithmName.Ed25519,
             publicKey
           )
@@ -144,13 +146,14 @@ describe('verify', () => {
         const signature = await webcrypto.subtle.sign(
           SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.RSASSA_PKCS1_v1_5],
           privateKey,
-          data
+          new TextEncoder().encode(data)
         );
+        const signatureString = toHex(signature);
 
         expect(
-          await verifyInternal(
+          await verify(
             data,
-            signature,
+            signatureString,
             SigningAlgorithmName.RSASSA_PKCS1_v1_5,
             publicKey
           )
@@ -162,13 +165,14 @@ describe('verify', () => {
         const signature = await webcrypto.subtle.sign(
           SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.RSA_PSS],
           privateKey,
-          data
+          new TextEncoder().encode(data)
         );
+        const signatureString = toHex(signature);
 
         expect(
-          await verifyInternal(
+          await verify(
             data,
-            signature,
+            signatureString,
             SigningAlgorithmName.RSA_PSS,
             publicKey
           )
@@ -180,13 +184,14 @@ describe('verify', () => {
         const signature = await webcrypto.subtle.sign(
           SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.Ed448],
           privateKey,
-          data
+          new TextEncoder().encode(data)
         );
+        const signatureString = toHex(signature);
 
         expect(
-          await verifyInternal(
+          await verify(
             data,
-            signature,
+            signatureString,
             SigningAlgorithmName.Ed448,
             publicKey
           )
