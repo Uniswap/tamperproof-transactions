@@ -62,7 +62,7 @@ describe('sign', () => {
     );
 
     const ed448PrivateKeyBuffer = fromHex(
-      '3047020100300506032b6571043b0439d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842a69b9dc13ee02a4b9dc13ee02a4b9dc13ee02a4b9dc13ee02a4'
+      '3047020100300506032b6571043b0439d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842a69b9dc13ee02a4b9dc13ee02a4b9dc13ee02a4b9dc13ee02a40'
     );
     privateKeyEd448 = await webcrypto.subtle.importKey(
       'pkcs8',

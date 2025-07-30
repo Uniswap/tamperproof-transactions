@@ -24,16 +24,14 @@ export function toHex(buffer: ArrayBuffer | Uint8Array): string {
 }
 
 export function fromBase64(base64: string): Uint8Array {
-  // Remove any whitespace and padding characters for processing
   const cleanBase64 = base64.replace(/\s/g, '');
-  
-  // Use atob to decode base64 (available in browsers and modern Node.js)
+
   const binaryString = atob(cleanBase64);
   const bytes = new Uint8Array(binaryString.length);
-  
+
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
-  
+
   return bytes;
 }
