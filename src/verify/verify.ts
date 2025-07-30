@@ -5,11 +5,10 @@ import {
   SIGNING_ALGORITHM_CONFIG,
 } from '../algorithms';
 import { fromHex } from '../utils/hex';
-
-import dns from 'dns';
-const dnsPromises = dns.promises;
+import doh from 'dohjs';
 
 export const PREFIX = 'TWIST=';
+const resolver = new doh.DohResolver('https://1.1.1.1/dns-query');
 
 export async function verifyAsyncDns(
   calldata: string,
@@ -17,20 +16,20 @@ export async function verifyAsyncDns(
   host: string,
   id?: number
 ): Promise<boolean> {
-  // Convert callback-style to Promise
-  const records = await dnsPromises.resolveTxt(host);
+  // Use DNS over HTTPS to resolve TXT records
+  const response = await resolver.query(host, 'TXT');
 
-  if (!records || records.length === 0) {
+  if (!response.answers || response.answers.length === 0) {
     throw new Error(`No TXT records found for host ${host}`);
   }
 
-  const [address] = records;
   let twistRecord: string | undefined;
 
-  // return the first record that starts with the prefix
-  for (const record of address) {
-    if (record.startsWith(PREFIX)) {
-      twistRecord = record.slice(PREFIX.length);
+  // Search through all TXT record answers for one that starts with the prefix
+  for (const answer of response.answers) {
+    const recordData = answer.data.toString();
+    if (recordData.startsWith(PREFIX)) {
+      twistRecord = recordData.slice(PREFIX.length);
       break;
     }
   }
