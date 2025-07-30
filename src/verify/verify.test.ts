@@ -5,7 +5,7 @@ jest.mock('dns', () => ({
   },
 }));
 
-import { verify } from './verify';
+import { verify, verifyAsyncDns, PREFIX } from './verify';
 import { toHex } from '../utils/hex';
 import { SigningAlgorithmName, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 import { webcrypto } from 'crypto';
@@ -19,42 +19,42 @@ let rsaPSSKeyPair: webcrypto.CryptoKeyPair;
 let ed448KeyPair: webcrypto.CryptoKeyPair;
 
 describe('verify', () => {
-  // describe('verifyAsyncDns', () => {
-  //   beforeEach(() => {
-  //     // Clear mock between tests
-  //     (dns.promises.resolveTxt as jest.Mock).mockClear();
-  //   });
+  describe('verifyAsyncDns', () => {
+    beforeEach(() => {
+      // Clear mock between tests
+      (dns.promises.resolveTxt as jest.Mock).mockClear();
+    });
 
-  //   it('throws error if DNS resolution fails', async () => {
-  //     (dns.promises.resolveTxt as jest.Mock).mockRejectedValue(
-  //       new Error('DNS resolution failed')
-  //     );
+    it('throws error if DNS resolution fails', async () => {
+      (dns.promises.resolveTxt as jest.Mock).mockRejectedValue(
+        new Error('DNS resolution failed')
+      );
 
-  //     await expect(
-  //       verifyAsyncDns('data', 'signature', 'example.com')
-  //     ).rejects.toThrow('DNS resolution failed');
-  //   });
+      await expect(
+        verifyAsyncDns('data', 'signature', 'example.com')
+      ).rejects.toThrow('DNS resolution failed');
+    });
 
-  //   it('throws error if no TXT records are found', async () => {
-  //     (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([]);
+    it('throws error if no TXT records are found', async () => {
+      (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([]);
 
-  //     await expect(
-  //       verifyAsyncDns('data', 'signature', 'example.com')
-  //     ).rejects.toThrow('No TXT records found for host example.com');
-  //   });
+      await expect(
+        verifyAsyncDns('data', 'signature', 'example.com')
+      ).rejects.toThrow('No TXT records found for host example.com');
+    });
 
-  //   it('throws error if no record with PREFIX is found', async () => {
-  //     (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([
-  //       ['WRONG_PREFIX=somedata'],
-  //     ]);
+    it('throws error if no record with PREFIX is found', async () => {
+      (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([
+        ['WRONG_PREFIX=somedata'],
+      ]);
 
-  //     await expect(
-  //       verifyAsyncDns('data', 'signature', 'example.com')
-  //     ).rejects.toThrow(
-  //       `No TXT record found with prefix ${PREFIX} for host example.com`
-  //     );
-  //   });
-  // });
+      await expect(
+        verifyAsyncDns('data', 'signature', 'example.com')
+      ).rejects.toThrow(
+        `No TXT record found with prefix ${PREFIX} for host example.com`
+      );
+    });
+  });
 
   describe('verify', () => {
     beforeAll(async () => {
