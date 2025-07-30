@@ -1,15 +1,15 @@
 // Move mock before imports
-jest.mock('dns', () => ({
-  promises: {
-    resolveTxt: jest.fn(),
-  },
+const mockQuery = jest.fn();
+jest.mock('dohjs', () => ({
+  DohResolver: jest.fn().mockImplementation(() => ({
+    query: mockQuery,
+  })),
 }));
 
-import { verify, verifyAsyncDns, PREFIX } from './verify';
+import { verify, verifyAsyncDns, verifyAsyncJson, PREFIX } from './verify';
 import { toHex } from '../utils/hex';
 import { SigningAlgorithmName, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 import { webcrypto } from 'crypto';
-import dns from 'dns';
 
 const data = 'data';
 let ecdsaKeyPair: webcrypto.CryptoKeyPair;
@@ -18,17 +18,15 @@ let rsaSSAKeyPair: webcrypto.CryptoKeyPair;
 let rsaPSSKeyPair: webcrypto.CryptoKeyPair;
 let ed448KeyPair: webcrypto.CryptoKeyPair;
 
-describe('verify', () => {
-  describe('verifyAsyncDns', () => {
+describe('verify.ts', () => {
+  describe('Test failure cases for verifyAsyncDns', () => {
     beforeEach(() => {
       // Clear mock between tests
-      (dns.promises.resolveTxt as jest.Mock).mockClear();
+      mockQuery.mockClear();
     });
 
     it('throws error if DNS resolution fails', async () => {
-      (dns.promises.resolveTxt as jest.Mock).mockRejectedValue(
-        new Error('DNS resolution failed')
-      );
+      mockQuery.mockRejectedValue(new Error('DNS resolution failed'));
 
       await expect(
         verifyAsyncDns('data', 'signature', 'example.com')
@@ -36,7 +34,7 @@ describe('verify', () => {
     });
 
     it('throws error if no TXT records are found', async () => {
-      (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([]);
+      mockQuery.mockResolvedValue({ answers: [] });
 
       await expect(
         verifyAsyncDns('data', 'signature', 'example.com')
@@ -44,15 +42,23 @@ describe('verify', () => {
     });
 
     it('throws error if no record with PREFIX is found', async () => {
-      (dns.promises.resolveTxt as jest.Mock).mockResolvedValue([
-        ['WRONG_PREFIX=somedata'],
-      ]);
+      mockQuery.mockResolvedValue({
+        answers: [{ data: 'WRONG_PREFIX=somedata' }],
+      });
 
       await expect(
         verifyAsyncDns('data', 'signature', 'example.com')
       ).rejects.toThrow(
         `No TXT record found with prefix ${PREFIX} for host example.com`
       );
+    });
+  });
+
+  describe('Test failure cases for verifyAsyncJson', () => {
+    it('throws error if the URL is not a valid URL', async () => {
+      await expect(
+        verifyAsyncJson('data', 'signature', 'not-a-url')
+      ).rejects.toThrow('Failed to parse URL from not-a-url');
     });
   });
 
@@ -101,6 +107,7 @@ describe('verify', () => {
         ['sign', 'verify']
       )) as webcrypto.CryptoKeyPair;
     });
+
     describe('returns true for correct public key', () => {
       it('is successful with ECDSA', async () => {
         const privateKey = ecdsaKeyPair.privateKey;
@@ -199,25 +206,35 @@ describe('verify', () => {
       });
     });
 
-    // it('returns false for incorrect public key', async () => {
-    //   // Generate first key pair
-    //   const { privateKey: privateKey1 } = generateKeyPairSync('rsa', {
-    //     modulusLength: 2048,
-    //   });
+    it('returns false for incorrect public key', async () => {
+      const privateKey1 = rsaSSAKeyPair.privateKey;
+      const signature = await webcrypto.subtle.sign(
+        SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.RSASSA_PKCS1_v1_5],
+        privateKey1,
+        new TextEncoder().encode(data)
+      );
+      const signatureString = toHex(signature);
 
-    //   // Generate second key pair (different from first)
-    //   const { publicKey: privateKey2 } = generateKeyPairSync('rsa', {
-    //     modulusLength: 2048,
-    //   });
+      const rsaSSAKeyPair2 = await webcrypto.subtle.generateKey(
+        {
+          name: 'RSASSA-PKCS1-v1_5',
+          hash: { name: 'SHA-256' },
+          publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+          modulusLength: 2048,
+        },
+        false,
+        ['sign', 'verify']
+      );
+      const publicKey2 = rsaSSAKeyPair2.publicKey;
 
-    //   const data = 'data';
-    //   // Sign the data with the first key pair
-    //   const result = await sign(data, privateKey1, SigningAlgorithmName.RSA_PSS);
-
-    //   // Verify the signature with the different public key
-    //   expect(verifySync(data, result, SigningAlgorithmName.RSA_PSS, privateKey2)).toBe(
-    //     false
-    //   );
-    // });
+      expect(
+        await verify(
+          data,
+          signatureString,
+          SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+          publicKey2
+        )
+      ).toBe(false);
+    });
   });
 });
