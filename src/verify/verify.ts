@@ -1,4 +1,4 @@
-import { webcrypto } from 'crypto';
+const webcrypto = globalThis.crypto;
 import {
   SigningAlgorithmName,
   isSigningAlgorithm,
@@ -81,7 +81,7 @@ export async function verify(
   calldata: string,
   signature: string,
   algorithm: SigningAlgorithmName,
-  publicKey: webcrypto.CryptoKey
+  publicKey: CryptoKey
 ): Promise<boolean> {
   const encoder = new TextEncoder();
   const bufferData = encoder.encode(calldata);

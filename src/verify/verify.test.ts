@@ -9,14 +9,14 @@ jest.mock('dohjs', () => ({
 import { verify, verifyAsyncDns, verifyAsyncJson, PREFIX } from './verify';
 import { toHex } from '../utils/hex';
 import { SigningAlgorithmName, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
-import { webcrypto } from 'crypto';
+const webcrypto = globalThis.crypto;
 
 const data = 'data';
-let ecdsaKeyPair: webcrypto.CryptoKeyPair;
-let ed25519KeyPair: webcrypto.CryptoKeyPair;
-let rsaSSAKeyPair: webcrypto.CryptoKeyPair;
-let rsaPSSKeyPair: webcrypto.CryptoKeyPair;
-let ed448KeyPair: webcrypto.CryptoKeyPair;
+let ecdsaKeyPair: CryptoKeyPair;
+let ed25519KeyPair: CryptoKeyPair;
+let rsaSSAKeyPair: CryptoKeyPair;
+let rsaPSSKeyPair: CryptoKeyPair;
+let ed448KeyPair: CryptoKeyPair;
 
 describe('verify.ts', () => {
   describe('Test failure cases for verifyAsyncDns', () => {
@@ -72,13 +72,13 @@ describe('verify.ts', () => {
         false,
         ['sign', 'verify']
       );
-      ed25519KeyPair = (await webcrypto.subtle.generateKey(
+      ed25519KeyPair = await webcrypto.subtle.generateKey(
         {
           name: 'Ed25519',
         },
         false,
         ['sign', 'verify']
-      )) as webcrypto.CryptoKeyPair;
+      );
       rsaSSAKeyPair = await webcrypto.subtle.generateKey(
         {
           name: 'RSASSA-PKCS1-v1_5',
@@ -105,7 +105,7 @@ describe('verify.ts', () => {
         },
         false,
         ['sign', 'verify']
-      )) as webcrypto.CryptoKeyPair;
+      )) as CryptoKeyPair;
     });
 
     describe('returns true for correct public key', () => {

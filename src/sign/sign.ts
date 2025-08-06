@@ -1,9 +1,9 @@
-import { webcrypto } from 'crypto';
+const webcrypto = globalThis.crypto;
 import { SIGNING_ALGORITHM_CONFIG, isSigningAlgorithm } from '../algorithms';
 
 export async function sign(
   data: string,
-  privateKey: webcrypto.CryptoKey,
+  privateKey: CryptoKey,
   algorithm: keyof typeof SIGNING_ALGORITHM_CONFIG
 ): Promise<string> {
   // verify that the algorithm is supported

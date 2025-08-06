@@ -1,14 +1,14 @@
 import { sign } from './sign';
-import { webcrypto } from 'crypto';
+const webcrypto = globalThis.crypto;
 import { SigningAlgorithmName } from '../algorithms';
 import { fromHex, fromBase64 } from '../utils/hex';
 
 let data: string;
-let privateKeyRSA!: webcrypto.CryptoKey;
-let privateKeyRSA_PSS!: webcrypto.CryptoKey;
-let privateKeyECDSA!: webcrypto.CryptoKey;
-let privateKeyEd25519!: webcrypto.CryptoKey;
-let privateKeyEd448!: webcrypto.CryptoKey;
+let privateKeyRSA!: CryptoKey;
+let privateKeyRSA_PSS!: CryptoKey;
+let privateKeyECDSA!: CryptoKey;
+let privateKeyEd25519!: CryptoKey;
+let privateKeyEd448!: CryptoKey;
 
 describe('sign', () => {
   beforeAll(async () => {
