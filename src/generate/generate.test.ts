@@ -1,17 +1,16 @@
-import { generateKeyPairSync } from 'crypto';
-import { SigningAlgorithmConfig, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
+import { SigningAlgorithmName } from '../algorithms';
 import { generate } from './generate';
 
 describe('generate', () => {
-  it('should return a string', () => {
-    const { publicKey } = generateKeyPairSync('rsa', {
-      modulusLength: 2048,
+  it('should return expected value', () => {
+    const pubKeyHex =
+      '30820122300d06092a864886f70d01010105000382010f003082010a02820101009d36845018ef5dc07a3097055a5657404be931644c98350ad86918ac3873dad2b3950ab8913856d1f47281a48eeec17737a0c7dd02f3dda3e1d86bfd72932968efee7b6d2a73e9b72a1eb741d3016b212a41f000936e0e7b9bc9726b7522447b8059a3263020c0685896f2d597a6b25dc8255c34c8ac12c3f6410d8200a8aa880f93cda8e7085550dba93ddb2623325094ef2fff466057998bf9da851c4ff7064a719cde40882ccec5c1c32ecc5918b63fb46416f1d3761aab4a2249737b5700e9e65df075a91cb33846e4efafccb45bfa622af11a6ff9ca6fcf7d3140d6227652b63337a90db79461957bb0390934454530292f243e9a2ace92d0375136e3f10203010001';
+    const result = generate({
+      key: pubKeyHex,
+      algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
     });
-    expect(
-      typeof generate({
-        key: publicKey.export({ type: 'spki', format: 'der' }).toString('hex'),
-        algorithm: SIGNING_ALGORITHM_CONFIG['RSASSA-PKCS1-v1_5'],
-      })
-    ).toBe('string');
+    expect(result).toBe(
+      '{"publicKeys":[{"id":"1","alg":"RSASSA-PKCS1-v1_5","publicKey":"0x30820122300d06092a864886f70d01010105000382010f003082010a02820101009d36845018ef5dc07a3097055a5657404be931644c98350ad86918ac3873dad2b3950ab8913856d1f47281a48eeec17737a0c7dd02f3dda3e1d86bfd72932968efee7b6d2a73e9b72a1eb741d3016b212a41f000936e0e7b9bc9726b7522447b8059a3263020c0685896f2d597a6b25dc8255c34c8ac12c3f6410d8200a8aa880f93cda8e7085550dba93ddb2623325094ef2fff466057998bf9da851c4ff7064a719cde40882ccec5c1c32ecc5918b63fb46416f1d3761aab4a2249737b5700e9e65df075a91cb33846e4efafccb45bfa622af11a6ff9ca6fcf7d3140d6227652b63337a90db79461957bb0390934454530292f243e9a2ace92d0375136e3f10203010001"}]}'
+    );
   });
 });

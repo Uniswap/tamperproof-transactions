@@ -1,15 +1,16 @@
-import { SigningAlgorithmConfig } from '../algorithms';
+import { SigningAlgorithmName } from '../algorithms';
 export type PublicKey = {
   key: string;
-  algorithm: SigningAlgorithmConfig;
+  algorithm: SigningAlgorithmName;
 };
 
 export function generate(...publicKeys: PublicKey[]): string {
   const pubKeys: object[] = publicKeys.map((publicKey, index) => {
     return {
-      id: index,
+      // EIP states 1-indexed string
+      id: (index + 1).toString(),
       alg: publicKey.algorithm,
-      publicKey: publicKey.key,
+      publicKey: `0x${publicKey.key}`, // Add 0x prefix
     };
   });
   return JSON.stringify({

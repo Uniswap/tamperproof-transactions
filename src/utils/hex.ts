@@ -1,5 +1,6 @@
 export function fromHex(hex: string): Uint8Array {
-  const cleanHex = hex.replace(/\s/g, '');
+  // Remove 0x prefix if present, then clean whitespace
+  const cleanHex = hex.replace(/^0x/i, '').replace(/\s/g, '');
   if (cleanHex.length % 2 !== 0) {
     throw new Error('Invalid hex string: length must be even');
   }
