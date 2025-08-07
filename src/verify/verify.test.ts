@@ -29,7 +29,7 @@ describe('verify.ts', () => {
       mockQuery.mockRejectedValue(new Error('DNS resolution failed'));
 
       await expect(
-        verifyAsyncDns('data', 'signature', 'example.com')
+        verifyAsyncDns('data', 'signature', 'example.com', '1')
       ).rejects.toThrow('DNS resolution failed');
     });
 
@@ -37,7 +37,7 @@ describe('verify.ts', () => {
       mockQuery.mockResolvedValue({ answers: [] });
 
       await expect(
-        verifyAsyncDns('data', 'signature', 'example.com')
+        verifyAsyncDns('data', 'signature', 'example.com', '1')
       ).rejects.toThrow('No TXT records found for host example.com');
     });
 
@@ -47,7 +47,7 @@ describe('verify.ts', () => {
       });
 
       await expect(
-        verifyAsyncDns('data', 'signature', 'example.com')
+        verifyAsyncDns('data', 'signature', 'example.com', '1')
       ).rejects.toThrow(
         `No TXT record found with prefix ${PREFIX} for host example.com`
       );

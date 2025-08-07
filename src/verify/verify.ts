@@ -11,7 +11,7 @@ export async function verifyAsyncDns(
   calldata: string,
   signature: string,
   host: string,
-  id?: number,
+  id: string,
   thisResolver: DohResolver = quadOneResolver
 ): Promise<boolean> {
   // Use DNS over HTTPS to resolve TXT records
@@ -47,20 +47,35 @@ export async function verifyAsyncJson(
   calldata: string,
   signature: string,
   url: URL,
-  id?: number
+  id: string
 ): Promise<boolean> {
   // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
   const response = await fetch(url);
-  const publicKeys = (await response.json()) as Array<{
-    algorithm: string;
-    key: string;
-  }>;
-  const publicKey = id ? publicKeys[id] : publicKeys[0];
+  const data = (await response.json()) as {
+    publicKeys: Array<{
+      id: string;
+      alg: string;
+      publicKey: string;
+    }>;
+  };
+  const matchingKeys = data.publicKeys.filter(pk => pk.id === id.toString());
+
+  if (matchingKeys.length === 0) {
+    throw new Error(`Public key with id ${id} not found`);
+  }
+
+  if (matchingKeys.length > 1) {
+    throw new Error(
+      `Multiple public keys found with id ${id}. Key IDs must be unique.`
+    );
+  }
+
+  const publicKey = matchingKeys[0];
 
   const publicKeyObject = await webcrypto.subtle.importKey(
     'raw',
-    fromHex(publicKey.key),
-    { name: publicKey.algorithm },
+    fromHex(publicKey.publicKey),
+    { name: publicKey.alg },
     false,
     ['verify']
   );
