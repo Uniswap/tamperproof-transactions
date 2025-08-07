@@ -15,7 +15,15 @@ export async function verifyAsyncDns(
   thisResolver: DohResolver = quadOneResolver
 ): Promise<boolean> {
   // Use DNS over HTTPS to resolve TXT records
-  const response = await thisResolver.query(host, 'TXT', 'GET', {}, TIMEOUT);
+  const response = await thisResolver.query(
+    host,
+    'TXT',
+    'GET',
+    {
+      Accept: 'application/dns-message',
+    },
+    TIMEOUT
+  );
 
   if (!response.answers || response.answers.length === 0) {
     throw new Error(`No TXT records found for host ${host}`);
