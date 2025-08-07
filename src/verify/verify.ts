@@ -1,6 +1,7 @@
 const webcrypto = globalThis.crypto;
 import { isSigningAlgorithm, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 import { fromHex } from '../utils/hex';
+import { processTxtRecordData } from '../utils/txtRecord';
 import { DohResolver } from 'dohjs';
 
 export const PREFIX = 'TWIST=';
@@ -31,9 +32,10 @@ export async function verifyAsyncDns(
 
   let twistRecord: string | undefined;
 
-  // Search through all TXT record answers for one that starts with the prefix
+  // Search through all TXT record answers for the first one that starts with the prefix
   for (const answer of response.answers) {
-    const recordData = answer.data.toString();
+    const recordData = processTxtRecordData(answer.data);
+
     if (recordData.startsWith(PREFIX)) {
       twistRecord = recordData.slice(PREFIX.length);
       break;
@@ -57,8 +59,7 @@ export async function verifyAsyncJson(
   url: URL,
   id: string
 ): Promise<boolean> {
-  // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
-  const response = await fetch(url);
+  const response = await fetch(url, { redirect: 'error' });
   const data = (await response.json()) as {
     publicKeys: Array<{
       id: string;
