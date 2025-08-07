@@ -6,7 +6,7 @@ jest.mock('dohjs', () => ({
   })),
 }));
 
-import { verify, verifyAsyncDns, verifyAsyncJson, PREFIX } from './verify';
+import { verify, verifyAsyncDns, PREFIX } from './verify';
 import { toHex } from '../utils/hex';
 import { SigningAlgorithmName, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 const webcrypto = globalThis.crypto;
@@ -51,14 +51,6 @@ describe('verify.ts', () => {
       ).rejects.toThrow(
         `No TXT record found with prefix ${PREFIX} for host example.com`
       );
-    });
-  });
-
-  describe('Test failure cases for verifyAsyncJson', () => {
-    it('throws error if the URL is not a valid URL', async () => {
-      await expect(
-        verifyAsyncJson('data', 'signature', 'not-a-url')
-      ).rejects.toThrow('Failed to parse URL from not-a-url');
     });
   });
 
@@ -119,14 +111,7 @@ describe('verify.ts', () => {
         );
         const signatureString = toHex(signature);
 
-        expect(
-          await verify(
-            data,
-            signatureString,
-            SigningAlgorithmName.ECDSA,
-            publicKey
-          )
-        ).toBe(true);
+        expect(await verify(data, signatureString, publicKey)).toBe(true);
       });
       it('is successful with ed25519', async () => {
         const privateKey = ed25519KeyPair.privateKey;
@@ -138,14 +123,7 @@ describe('verify.ts', () => {
         );
         const signatureString = toHex(signature);
 
-        expect(
-          await verify(
-            data,
-            signatureString,
-            SigningAlgorithmName.Ed25519,
-            publicKey
-          )
-        ).toBe(true);
+        expect(await verify(data, signatureString, publicKey)).toBe(true);
       });
       it('is successful with RSASSA-PKCS1-v1_5', async () => {
         const privateKey = rsaSSAKeyPair.privateKey;
@@ -157,14 +135,7 @@ describe('verify.ts', () => {
         );
         const signatureString = toHex(signature);
 
-        expect(
-          await verify(
-            data,
-            signatureString,
-            SigningAlgorithmName.RSASSA_PKCS1_v1_5,
-            publicKey
-          )
-        ).toBe(true);
+        expect(await verify(data, signatureString, publicKey)).toBe(true);
       });
       it('is successful with RSA-PSS', async () => {
         const privateKey = rsaPSSKeyPair.privateKey;
@@ -176,14 +147,7 @@ describe('verify.ts', () => {
         );
         const signatureString = toHex(signature);
 
-        expect(
-          await verify(
-            data,
-            signatureString,
-            SigningAlgorithmName.RSA_PSS,
-            publicKey
-          )
-        ).toBe(true);
+        expect(await verify(data, signatureString, publicKey)).toBe(true);
       });
       it('is successful with Ed448', async () => {
         const privateKey = ed448KeyPair.privateKey;
@@ -195,14 +159,7 @@ describe('verify.ts', () => {
         );
         const signatureString = toHex(signature);
 
-        expect(
-          await verify(
-            data,
-            signatureString,
-            SigningAlgorithmName.Ed448,
-            publicKey
-          )
-        ).toBe(true);
+        expect(await verify(data, signatureString, publicKey)).toBe(true);
       });
     });
 
@@ -227,14 +184,7 @@ describe('verify.ts', () => {
       );
       const publicKey2 = rsaSSAKeyPair2.publicKey;
 
-      expect(
-        await verify(
-          data,
-          signatureString,
-          SigningAlgorithmName.RSASSA_PKCS1_v1_5,
-          publicKey2
-        )
-      ).toBe(false);
+      expect(await verify(data, signatureString, publicKey2)).toBe(false);
     });
   });
 });

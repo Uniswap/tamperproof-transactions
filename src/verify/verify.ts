@@ -1,23 +1,21 @@
 const webcrypto = globalThis.crypto;
-import {
-  SigningAlgorithmName,
-  isSigningAlgorithm,
-  SIGNING_ALGORITHM_CONFIG,
-} from '../algorithms';
+import { isSigningAlgorithm, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 import { fromHex } from '../utils/hex';
-import doh from 'dohjs';
+import { DohResolver } from 'dohjs';
 
 export const PREFIX = 'TWIST=';
-const resolver = new doh.DohResolver('https://1.1.1.1/dns-query');
+const quadOneResolver = new DohResolver('https://1.1.1.1/dns-query');
+const TIMEOUT = 1000;
 
 export async function verifyAsyncDns(
   calldata: string,
   signature: string,
   host: string,
-  id?: number
+  id?: number,
+  thisResolver: DohResolver = quadOneResolver
 ): Promise<boolean> {
   // Use DNS over HTTPS to resolve TXT records
-  const response = await resolver.query(host, 'TXT');
+  const response = await thisResolver.query(host, 'TXT', 'GET', {}, TIMEOUT);
 
   if (!response.answers || response.answers.length === 0) {
     throw new Error(`No TXT records found for host ${host}`);
@@ -40,13 +38,15 @@ export async function verifyAsyncDns(
     );
   }
 
-  return await verifyAsyncJson(calldata, signature, twistRecord, id);
+  const url = new URL(`https://${host}/${twistRecord}`);
+
+  return await verifyAsyncJson(calldata, signature, url, id);
 }
 
 export async function verifyAsyncJson(
   calldata: string,
   signature: string,
-  url: string,
+  url: URL,
   id?: number
 ): Promise<boolean> {
   // Fetch and parse the public keys from the URL, selecting either the specified key by ID or the first key
@@ -57,10 +57,6 @@ export async function verifyAsyncJson(
   }>;
   const publicKey = id ? publicKeys[id] : publicKeys[0];
 
-  if (!isSigningAlgorithm(publicKey.algorithm)) {
-    throw new Error(`Unsupported algorithm: ${publicKey.algorithm}`);
-  }
-
   const publicKeyObject = await webcrypto.subtle.importKey(
     'raw',
     fromHex(publicKey.key),
@@ -69,27 +65,25 @@ export async function verifyAsyncJson(
     ['verify']
   );
 
-  return await verify(
-    calldata,
-    signature,
-    publicKey.algorithm,
-    publicKeyObject
-  );
+  return await verify(calldata, signature, publicKeyObject);
 }
 
 export async function verify(
   calldata: string,
   signature: string,
-  algorithm: SigningAlgorithmName,
   publicKey: CryptoKey
 ): Promise<boolean> {
+  if (!isSigningAlgorithm(publicKey.algorithm.name)) {
+    throw new Error(`Unsupported algorithm: ${publicKey.algorithm.name}`);
+  }
+
   const encoder = new TextEncoder();
   const bufferData = encoder.encode(calldata);
 
   const signatureUint8Array = fromHex(signature);
 
   return await webcrypto.subtle.verify(
-    SIGNING_ALGORITHM_CONFIG[algorithm],
+    SIGNING_ALGORITHM_CONFIG[publicKey.algorithm.name],
     publicKey,
     signatureUint8Array,
     bufferData

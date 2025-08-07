@@ -264,6 +264,15 @@ describe('generate', () => {
       expect(parsed.publicKeys).toEqual([]);
     });
 
+    it('should fail with invalid algorithm', () => {
+      expect(() => {
+        generate({
+          key: testKeys.rsassa,
+          algorithm: 'INVALID_ALGORITHM' as SigningAlgorithmName,
+        });
+      }).toThrow();
+    });
+
     it('should preserve key order in output', () => {
       const result = generate(
         {
@@ -315,6 +324,81 @@ describe('generate', () => {
         '3',
         '4',
       ]);
+    });
+
+    it('should preserve existing 0x prefix in keys', () => {
+      const keyWithPrefix = `0x${testKeys.ecdsa}`;
+
+      const result = generate({
+        key: keyWithPrefix,
+        algorithm: SigningAlgorithmName.ECDSA,
+      });
+
+      const parsed = JSON.parse(result) as ParsedResult;
+      expect(parsed.publicKeys).toHaveLength(1);
+      expect(parsed.publicKeys[0]).toEqual({
+        id: '1',
+        alg: 'ECDSA',
+        publicKey: keyWithPrefix, // Should remain unchanged
+      });
+    });
+
+    it('should add 0x prefix to keys without prefix', () => {
+      const result = generate({
+        key: testKeys.ecdsa,
+        algorithm: SigningAlgorithmName.ECDSA,
+      });
+
+      const parsed = JSON.parse(result) as ParsedResult;
+      expect(parsed.publicKeys).toHaveLength(1);
+      expect(parsed.publicKeys[0]).toEqual({
+        id: '1',
+        alg: 'ECDSA',
+        publicKey: `0x${testKeys.ecdsa}`,
+      });
+    });
+
+    it('should handle mixed keys with and without 0x prefix', () => {
+      const keyWithPrefix = `0x${testKeys.rsassa}`;
+      const keyWithoutPrefix = testKeys.ecdsa;
+
+      const result = generate(
+        {
+          key: keyWithPrefix,
+          algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+        },
+        {
+          key: keyWithoutPrefix,
+          algorithm: SigningAlgorithmName.ECDSA,
+        }
+      );
+
+      const parsed = JSON.parse(result) as ParsedResult;
+      expect(parsed.publicKeys).toHaveLength(2);
+      expect(parsed.publicKeys[0]).toEqual({
+        id: '1',
+        alg: 'RSASSA-PKCS1-v1_5',
+        publicKey: keyWithPrefix, // Should preserve existing prefix
+      });
+      expect(parsed.publicKeys[1]).toEqual({
+        id: '2',
+        alg: 'ECDSA',
+        publicKey: `0x${keyWithoutPrefix}`, // Should add prefix
+      });
+    });
+
+    it('should not create double 0x prefix', () => {
+      const keyWithPrefix = `0x${testKeys.ed25519}`;
+
+      const result = generate({
+        key: keyWithPrefix,
+        algorithm: SigningAlgorithmName.Ed25519,
+      });
+
+      const parsed = JSON.parse(result) as ParsedResult;
+      expect(parsed.publicKeys).toHaveLength(1);
+      expect(parsed.publicKeys[0].publicKey).toBe(keyWithPrefix);
+      expect(parsed.publicKeys[0].publicKey).not.toContain('0x0x');
     });
   });
 });
