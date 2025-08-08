@@ -59,7 +59,17 @@ export async function verifyAsyncJson(
   url: URL,
   id: string
 ): Promise<boolean> {
+  if (url.protocol !== 'https:') {
+    throw new Error('Manifest must be fetched over HTTPS');
+  }
+
   const response = await fetch(url, { redirect: 'error' });
+
+  const ct = response.headers.get('content-type') || '';
+  if (!/^application\/json(?:;|$)/i.test(ct)) {
+    throw new Error('Manifest Content-Type must be application/json');
+  }
+
   const data = (await response.json()) as {
     publicKeys: Array<{
       id: string;
