@@ -6,7 +6,7 @@ jest.mock('dohjs', () => ({
   })),
 }));
 
-import { verify, verifyAsyncDns, PREFIX } from './verify';
+import { verify, verifyAsyncDns, verifyAsyncJson, PREFIX } from './verify';
 import { toHex } from '../utils/hex';
 import { SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 const webcrypto = globalThis.crypto;
@@ -212,6 +212,114 @@ describe('verify.ts', () => {
       await expect(
         verifyAsyncDns('data', 'signature', 'example.com', '1')
       ).rejects.toThrow(); // Will fail at crypto step, but parsing succeeded
+    });
+  });
+
+  describe('verifyAsyncJson', () => {
+    const httpsUrl = new URL('https://example.com/manifest.json');
+    let localRsaSSAKeyPair: CryptoKeyPair;
+
+    beforeAll(async () => {
+      localRsaSSAKeyPair = await webcrypto.subtle.generateKey(
+        {
+          name: 'RSASSA-PKCS1-v1_5',
+          hash: { name: 'SHA-256' },
+          publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+          modulusLength: 2048,
+        },
+        false,
+        ['sign', 'verify']
+      );
+    });
+
+    it('throws if URL is not HTTPS', async () => {
+      const httpUrl = new URL('http://example.com/manifest.json');
+      await expect(
+        verifyAsyncJson('data', 'signature', httpUrl, '1')
+      ).rejects.toThrow('Manifest must be fetched over HTTPS');
+    });
+
+    it('throws if Content-Type is not application/json', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        headers: { get: () => 'text/plain' },
+        json: () => Promise.resolve({ publicKeys: [] }),
+      });
+
+      await expect(
+        verifyAsyncJson('data', 'signature', httpsUrl, '1')
+      ).rejects.toThrow('Manifest Content-Type must be application/json');
+    });
+
+    it('throws if key id is not found', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ publicKeys: [] }),
+      });
+
+      await expect(
+        verifyAsyncJson('data', 'signature', httpsUrl, '1')
+      ).rejects.toThrow('Public key with id 1 not found');
+    });
+
+    it('throws if duplicate key ids are found', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        headers: { get: () => 'application/json' },
+        json: () =>
+          Promise.resolve({
+            publicKeys: [
+              { id: '1', alg: 'RS256', publicKey: '00' },
+              { id: '1', alg: 'RS256', publicKey: '00' },
+            ],
+          }),
+      });
+
+      await expect(
+        verifyAsyncJson('data', 'signature', httpsUrl, '1')
+      ).rejects.toThrow(
+        'Multiple public keys found with id 1. Key IDs must be unique.'
+      );
+    });
+
+    it('throws if algorithm is unsupported', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        headers: { get: () => 'application/json' },
+        json: () =>
+          Promise.resolve({
+            publicKeys: [{ id: '1', alg: 'UNSUPPORTED', publicKey: '00' }],
+          }),
+      });
+
+      await expect(
+        verifyAsyncJson('data', 'signature', httpsUrl, '1')
+      ).rejects.toThrow('Algorithm is not supported: UNSUPPORTED');
+    });
+
+    it('returns true when signature verifies for RS256', async () => {
+      const privateKey = localRsaSSAKeyPair.privateKey;
+      const publicKey = localRsaSSAKeyPair.publicKey;
+
+      const signature = await webcrypto.subtle.sign(
+        SIGNING_ALGORITHM_CONFIG.RS256,
+        privateKey,
+        new TextEncoder().encode(data)
+      );
+
+      const signatureHex = toHex(signature);
+
+      const spki = await webcrypto.subtle.exportKey('spki', publicKey);
+      const spkiHex = toHex(spki);
+
+      global.fetch = jest.fn().mockResolvedValue({
+        headers: { get: () => 'application/json' },
+        json: () =>
+          Promise.resolve({
+            publicKeys: [{ id: '1', alg: 'RS256', publicKey: spkiHex }],
+          }),
+      });
+
+      await expect(
+        verifyAsyncJson(data, signatureHex, httpsUrl, '1')
+      ).resolves.toBe(true);
     });
   });
 
