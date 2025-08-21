@@ -1,5 +1,9 @@
 const webcrypto = globalThis.crypto;
-import { isSigningAlgorithm, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
+import {
+  SigningAlgorithmConfig,
+  SIGNING_ALGORITHM_CONFIG,
+  SIGNING_ALGORITHM_IMPORT_PARAMS,
+} from '../algorithms';
 import { fromHex } from '../utils/hex';
 import { processTxtRecordData } from '../utils/txtRecord';
 import { DohResolver } from 'dohjs';
@@ -91,35 +95,60 @@ export async function verifyAsyncJson(
 
   const publicKey = matchingKeys[0];
 
+  if (!Object.hasOwn(SIGNING_ALGORITHM_IMPORT_PARAMS, publicKey.alg)) {
+    throw new Error(`Algorithm is not supported: ${String(publicKey.alg)}`);
+  }
+  const algorithmKey =
+    publicKey.alg as keyof typeof SIGNING_ALGORITHM_IMPORT_PARAMS;
+
   const publicKeyObject = await webcrypto.subtle.importKey(
-    'raw',
+    'spki',
     fromHex(publicKey.publicKey),
-    { name: publicKey.alg },
+    SIGNING_ALGORITHM_IMPORT_PARAMS[algorithmKey],
     false,
     ['verify']
   );
 
-  return await verify(calldata, signature, publicKeyObject);
+  return await verify(calldata, signature, publicKeyObject, algorithmKey);
 }
 
 export async function verify(
   calldata: string,
   signature: string,
-  publicKey: CryptoKey
+  publicKey: CryptoKey,
+  alg: keyof typeof SIGNING_ALGORITHM_CONFIG
 ): Promise<boolean> {
-  if (!isSigningAlgorithm(publicKey.algorithm.name)) {
-    throw new Error(`Unsupported algorithm: ${publicKey.algorithm.name}`);
-  }
-
   const encoder = new TextEncoder();
   const bufferData = encoder.encode(calldata);
 
-  const signatureUint8Array = fromHex(signature);
+  const signatureBytes = fromHex(signature);
 
-  return await webcrypto.subtle.verify(
-    SIGNING_ALGORITHM_CONFIG[publicKey.algorithm.name],
+  if (!Object.hasOwn(SIGNING_ALGORITHM_CONFIG, alg)) {
+    throw new Error(`Algorithm is not supported: ${String(alg)}`);
+  }
+  const algConfig: SigningAlgorithmConfig = SIGNING_ALGORITHM_CONFIG[alg];
+
+  // Use algorithm params directly from configuration
+  const verifyParams = algConfig as unknown as
+    | Algorithm
+    | EcdsaParams
+    | RsaPssParams;
+
+  let signatureForVerify: Uint8Array = signatureBytes;
+  if (algConfig.name === 'ECDSA') {
+    // Only accept raw r||s for ECDSA signatures and pass raw to verify
+    const coordLen = algConfig.ecdsaCoordinateLength!;
+    if (signatureBytes.length !== coordLen * 2) {
+      return false;
+    }
+    signatureForVerify = signatureBytes;
+  }
+
+  const verified = await webcrypto.subtle.verify(
+    verifyParams,
     publicKey,
-    signatureUint8Array,
+    signatureForVerify,
     bufferData
   );
+  return verified;
 }

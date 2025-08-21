@@ -8,15 +8,20 @@ jest.mock('dohjs', () => ({
 
 import { verify, verifyAsyncDns, PREFIX } from './verify';
 import { toHex } from '../utils/hex';
-import { SigningAlgorithmName, SIGNING_ALGORITHM_CONFIG } from '../algorithms';
+import { SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 const webcrypto = globalThis.crypto;
 
 const data = 'data';
 let ecdsaKeyPair: CryptoKeyPair;
+let ecdsa384KeyPair: CryptoKeyPair;
+let ecdsa521KeyPair: CryptoKeyPair;
 let ed25519KeyPair: CryptoKeyPair;
 let rsaSSAKeyPair: CryptoKeyPair;
+let rsaSSA384KeyPair: CryptoKeyPair;
+let rsaSSA512KeyPair: CryptoKeyPair;
 let rsaPSSKeyPair: CryptoKeyPair;
-let ed448KeyPair: CryptoKeyPair;
+let rsaPSS384KeyPair: CryptoKeyPair;
+let rsaPSS512KeyPair: CryptoKeyPair;
 
 describe('verify.ts', () => {
   describe('Test failure cases for verifyAsyncDns', () => {
@@ -72,15 +77,13 @@ describe('verify.ts', () => {
             publicKeys: [
               {
                 id: '1',
-                alg: 'ECDSA',
+                alg: 'ES256',
                 publicKey: '0x123456789abcdef',
               },
             ],
           }),
       });
 
-      // Since we can't easily test the crypto verification without setting up keys,
-      // we'll expect it to throw at the crypto step (which means parsing worked)
       await expect(
         verifyAsyncDns('data', 'signature', 'example.com', '1')
       ).rejects.toThrow(); // Will fail at crypto step, but parsing succeeded
@@ -110,7 +113,7 @@ describe('verify.ts', () => {
             publicKeys: [
               {
                 id: '1',
-                alg: 'ECDSA',
+                alg: 'ES256',
                 publicKey: '0x123456789abcdef',
               },
             ],
@@ -143,7 +146,7 @@ describe('verify.ts', () => {
             publicKeys: [
               {
                 id: '1',
-                alg: 'ECDSA',
+                alg: 'ES256',
                 publicKey: '0x123456789abcdef',
               },
             ],
@@ -199,7 +202,7 @@ describe('verify.ts', () => {
             publicKeys: [
               {
                 id: '1',
-                alg: 'ECDSA',
+                alg: 'ES256',
                 publicKey: '0x123456789abcdef',
               },
             ],
@@ -222,6 +225,22 @@ describe('verify.ts', () => {
         false,
         ['sign', 'verify']
       );
+      ecdsa384KeyPair = await webcrypto.subtle.generateKey(
+        {
+          name: 'ECDSA',
+          namedCurve: 'P-384',
+        },
+        false,
+        ['sign', 'verify']
+      );
+      ecdsa521KeyPair = await webcrypto.subtle.generateKey(
+        {
+          name: 'ECDSA',
+          namedCurve: 'P-521',
+        },
+        false,
+        ['sign', 'verify']
+      );
       ed25519KeyPair = await webcrypto.subtle.generateKey(
         {
           name: 'Ed25519',
@@ -239,6 +258,26 @@ describe('verify.ts', () => {
         false,
         ['sign', 'verify']
       );
+      rsaSSA384KeyPair = await webcrypto.subtle.generateKey(
+        {
+          name: 'RSASSA-PKCS1-v1_5',
+          hash: { name: 'SHA-384' },
+          publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+          modulusLength: 2048,
+        },
+        false,
+        ['sign', 'verify']
+      );
+      rsaSSA512KeyPair = await webcrypto.subtle.generateKey(
+        {
+          name: 'RSASSA-PKCS1-v1_5',
+          hash: { name: 'SHA-512' },
+          publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+          modulusLength: 2048,
+        },
+        false,
+        ['sign', 'verify']
+      );
       rsaPSSKeyPair = await webcrypto.subtle.generateKey(
         {
           name: 'RSA-PSS',
@@ -249,82 +288,175 @@ describe('verify.ts', () => {
         false,
         ['sign', 'verify']
       );
-      ed448KeyPair = (await webcrypto.subtle.generateKey(
+      rsaPSS384KeyPair = await webcrypto.subtle.generateKey(
         {
-          name: 'Ed448',
+          name: 'RSA-PSS',
+          hash: { name: 'SHA-384' },
+          publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+          modulusLength: 2048,
         },
         false,
         ['sign', 'verify']
-      )) as CryptoKeyPair;
+      );
+      rsaPSS512KeyPair = await webcrypto.subtle.generateKey(
+        {
+          name: 'RSA-PSS',
+          hash: { name: 'SHA-512' },
+          publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+          modulusLength: 2048,
+        },
+        false,
+        ['sign', 'verify']
+      );
     });
 
     describe('returns true for correct public key', () => {
-      it('is successful with ECDSA', async () => {
+      it('is successful with ES256 (ECDSA P-256)', async () => {
         const privateKey = ecdsaKeyPair.privateKey;
         const publicKey = ecdsaKeyPair.publicKey;
         const signature = await webcrypto.subtle.sign(
-          SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.ECDSA],
+          SIGNING_ALGORITHM_CONFIG.ES256,
           privateKey,
           new TextEncoder().encode(data)
         );
         const signatureString = toHex(signature);
 
-        expect(await verify(data, signatureString, publicKey)).toBe(true);
+        expect(await verify(data, signatureString, publicKey, 'ES256')).toBe(
+          true
+        );
       });
-      it('is successful with ed25519', async () => {
+      it('is successful with EdDSA (Ed25519)', async () => {
         const privateKey = ed25519KeyPair.privateKey;
         const publicKey = ed25519KeyPair.publicKey;
         const signature = await webcrypto.subtle.sign(
-          SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.Ed25519],
+          SIGNING_ALGORITHM_CONFIG.EdDSA,
           privateKey,
           new TextEncoder().encode(data)
         );
         const signatureString = toHex(signature);
 
-        expect(await verify(data, signatureString, publicKey)).toBe(true);
+        expect(await verify(data, signatureString, publicKey, 'EdDSA')).toBe(
+          true
+        );
       });
-      it('is successful with RSASSA-PKCS1-v1_5', async () => {
+      it('is successful with ES384 (ECDSA P-384)', async () => {
+        const privateKey = ecdsa384KeyPair.privateKey;
+        const publicKey = ecdsa384KeyPair.publicKey;
+        const signature = await webcrypto.subtle.sign(
+          SIGNING_ALGORITHM_CONFIG.ES384,
+          privateKey,
+          new TextEncoder().encode(data)
+        );
+        const signatureString = toHex(signature);
+
+        expect(await verify(data, signatureString, publicKey, 'ES384')).toBe(
+          true
+        );
+      });
+      it('is successful with ES512 (ECDSA P-521)', async () => {
+        const privateKey = ecdsa521KeyPair.privateKey;
+        const publicKey = ecdsa521KeyPair.publicKey;
+        const signature = await webcrypto.subtle.sign(
+          SIGNING_ALGORITHM_CONFIG.ES512,
+          privateKey,
+          new TextEncoder().encode(data)
+        );
+        const signatureString = toHex(signature);
+
+        expect(await verify(data, signatureString, publicKey, 'ES512')).toBe(
+          true
+        );
+      });
+      it('is successful with RS384 (RSASSA-PKCS1-v1_5)', async () => {
+        const privateKey = rsaSSA384KeyPair.privateKey;
+        const publicKey = rsaSSA384KeyPair.publicKey;
+        const signature = await webcrypto.subtle.sign(
+          SIGNING_ALGORITHM_CONFIG.RS384,
+          privateKey,
+          new TextEncoder().encode(data)
+        );
+        const signatureString = toHex(signature);
+
+        expect(await verify(data, signatureString, publicKey, 'RS384')).toBe(
+          true
+        );
+      });
+      it('is successful with RS512 (RSASSA-PKCS1-v1_5)', async () => {
+        const privateKey = rsaSSA512KeyPair.privateKey;
+        const publicKey = rsaSSA512KeyPair.publicKey;
+        const signature = await webcrypto.subtle.sign(
+          SIGNING_ALGORITHM_CONFIG.RS512,
+          privateKey,
+          new TextEncoder().encode(data)
+        );
+        const signatureString = toHex(signature);
+
+        expect(await verify(data, signatureString, publicKey, 'RS512')).toBe(
+          true
+        );
+      });
+      it('is successful with PS384 (RSA-PSS)', async () => {
+        const privateKey = rsaPSS384KeyPair.privateKey;
+        const publicKey = rsaPSS384KeyPair.publicKey;
+        const signature = await webcrypto.subtle.sign(
+          SIGNING_ALGORITHM_CONFIG.PS384,
+          privateKey,
+          new TextEncoder().encode(data)
+        );
+        const signatureString = toHex(signature);
+
+        expect(await verify(data, signatureString, publicKey, 'PS384')).toBe(
+          true
+        );
+      });
+      it('is successful with PS512 (RSA-PSS)', async () => {
+        const privateKey = rsaPSS512KeyPair.privateKey;
+        const publicKey = rsaPSS512KeyPair.publicKey;
+        const signature = await webcrypto.subtle.sign(
+          SIGNING_ALGORITHM_CONFIG.PS512,
+          privateKey,
+          new TextEncoder().encode(data)
+        );
+        const signatureString = toHex(signature);
+
+        expect(await verify(data, signatureString, publicKey, 'PS512')).toBe(
+          true
+        );
+      });
+      it('is successful with RS256 (RSASSA-PKCS1-v1_5)', async () => {
         const privateKey = rsaSSAKeyPair.privateKey;
         const publicKey = rsaSSAKeyPair.publicKey;
         const signature = await webcrypto.subtle.sign(
-          SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.RSASSA_PKCS1_v1_5],
+          SIGNING_ALGORITHM_CONFIG.RS256,
           privateKey,
           new TextEncoder().encode(data)
         );
         const signatureString = toHex(signature);
 
-        expect(await verify(data, signatureString, publicKey)).toBe(true);
+        expect(await verify(data, signatureString, publicKey, 'RS256')).toBe(
+          true
+        );
       });
-      it('is successful with RSA-PSS', async () => {
+      it('is successful with PS256 (RSA-PSS)', async () => {
         const privateKey = rsaPSSKeyPair.privateKey;
         const publicKey = rsaPSSKeyPair.publicKey;
         const signature = await webcrypto.subtle.sign(
-          SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.RSA_PSS],
+          SIGNING_ALGORITHM_CONFIG.PS256,
           privateKey,
           new TextEncoder().encode(data)
         );
         const signatureString = toHex(signature);
 
-        expect(await verify(data, signatureString, publicKey)).toBe(true);
-      });
-      it('is successful with Ed448', async () => {
-        const privateKey = ed448KeyPair.privateKey;
-        const publicKey = ed448KeyPair.publicKey;
-        const signature = await webcrypto.subtle.sign(
-          SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.Ed448],
-          privateKey,
-          new TextEncoder().encode(data)
+        expect(await verify(data, signatureString, publicKey, 'PS256')).toBe(
+          true
         );
-        const signatureString = toHex(signature);
-
-        expect(await verify(data, signatureString, publicKey)).toBe(true);
       });
     });
 
     it('returns false for incorrect public key', async () => {
       const privateKey1 = rsaSSAKeyPair.privateKey;
       const signature = await webcrypto.subtle.sign(
-        SIGNING_ALGORITHM_CONFIG[SigningAlgorithmName.RSASSA_PKCS1_v1_5],
+        SIGNING_ALGORITHM_CONFIG.RS256,
         privateKey1,
         new TextEncoder().encode(data)
       );
@@ -342,7 +474,9 @@ describe('verify.ts', () => {
       );
       const publicKey2 = rsaSSAKeyPair2.publicKey;
 
-      expect(await verify(data, signatureString, publicKey2)).toBe(false);
+      expect(await verify(data, signatureString, publicKey2, 'RS256')).toBe(
+        false
+      );
     });
   });
 });

@@ -1,5 +1,5 @@
-import { SigningAlgorithmName } from '../algorithms';
 import { generate } from './generate';
+import { normalizeHex } from '../utils/hex';
 
 interface ParsedResult {
   publicKeys: {
@@ -19,92 +19,175 @@ describe('generate', () => {
       '3059301306072a8648ce3d020106082a8648ce3d030107034200041234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
     ed25519:
       '302a300506032b6570032100abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab',
-    ed448:
-      '3043300506032b6571033a00abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab',
   };
 
   describe('single algorithm tests', () => {
-    describe('RSASSA-PKCS1-v1_5', () => {
+    describe('RS256 (RSASSA-PKCS1-v1_5)', () => {
       it('should generate correct JSON for single key', () => {
         const result = generate({
           key: testKeys.rsassa,
-          algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+          algorithm: 'RS256',
         });
 
         const parsed = JSON.parse(result) as ParsedResult;
         expect(parsed.publicKeys).toHaveLength(1);
         expect(parsed.publicKeys[0]).toEqual({
           id: '1',
-          alg: 'RSASSA-PKCS1-v1_5',
+          alg: 'RS256',
           publicKey: `0x${testKeys.rsassa}`,
         });
       });
     });
 
-    describe('RSA-PSS', () => {
+    describe('PS256 (RSA-PSS)', () => {
       it('should generate correct JSON for single key', () => {
         const result = generate({
           key: testKeys.rsaPss,
-          algorithm: SigningAlgorithmName.RSA_PSS,
+          algorithm: 'PS256',
         });
 
         const parsed = JSON.parse(result) as ParsedResult;
         expect(parsed.publicKeys).toHaveLength(1);
         expect(parsed.publicKeys[0]).toEqual({
           id: '1',
-          alg: 'RSA-PSS',
-          publicKey: `0x${testKeys.rsaPss}`,
+          alg: 'PS256',
+          publicKey: normalizeHex(testKeys.rsaPss),
         });
       });
     });
 
-    describe('ECDSA', () => {
+    describe('ES256 (ECDSA)', () => {
       it('should generate correct JSON for single key', () => {
         const result = generate({
           key: testKeys.ecdsa,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         });
 
         const parsed = JSON.parse(result) as ParsedResult;
         expect(parsed.publicKeys).toHaveLength(1);
         expect(parsed.publicKeys[0]).toEqual({
           id: '1',
-          alg: 'ECDSA',
+          alg: 'ES256',
           publicKey: `0x${testKeys.ecdsa}`,
         });
       });
     });
 
-    describe('Ed25519', () => {
+    describe('EdDSA (Ed25519)', () => {
       it('should generate correct JSON for single key', () => {
         const result = generate({
           key: testKeys.ed25519,
-          algorithm: SigningAlgorithmName.Ed25519,
+          algorithm: 'EdDSA',
         });
 
         const parsed = JSON.parse(result) as ParsedResult;
         expect(parsed.publicKeys).toHaveLength(1);
         expect(parsed.publicKeys[0]).toEqual({
           id: '1',
-          alg: 'Ed25519',
+          alg: 'EdDSA',
           publicKey: `0x${testKeys.ed25519}`,
         });
       });
     });
 
-    describe('Ed448', () => {
+    describe('RS384 (RSASSA-PKCS1-v1_5)', () => {
       it('should generate correct JSON for single key', () => {
         const result = generate({
-          key: testKeys.ed448,
-          algorithm: SigningAlgorithmName.Ed448,
+          key: testKeys.rsassa,
+          algorithm: 'RS384',
         });
 
         const parsed = JSON.parse(result) as ParsedResult;
         expect(parsed.publicKeys).toHaveLength(1);
         expect(parsed.publicKeys[0]).toEqual({
           id: '1',
-          alg: 'Ed448',
-          publicKey: `0x${testKeys.ed448}`,
+          alg: 'RS384',
+          publicKey: `0x${testKeys.rsassa}`,
+        });
+      });
+    });
+
+    describe('RS512 (RSASSA-PKCS1-v1_5)', () => {
+      it('should generate correct JSON for single key', () => {
+        const result = generate({
+          key: testKeys.rsassa,
+          algorithm: 'RS512',
+        });
+
+        const parsed = JSON.parse(result) as ParsedResult;
+        expect(parsed.publicKeys).toHaveLength(1);
+        expect(parsed.publicKeys[0]).toEqual({
+          id: '1',
+          alg: 'RS512',
+          publicKey: `0x${testKeys.rsassa}`,
+        });
+      });
+    });
+
+    describe('PS384 (RSA-PSS)', () => {
+      it('should generate correct JSON for single key', () => {
+        const result = generate({
+          key: testKeys.rsaPss,
+          algorithm: 'PS384',
+        });
+
+        const parsed = JSON.parse(result) as ParsedResult;
+        expect(parsed.publicKeys).toHaveLength(1);
+        expect(parsed.publicKeys[0]).toEqual({
+          id: '1',
+          alg: 'PS384',
+          publicKey: normalizeHex(testKeys.rsaPss),
+        });
+      });
+    });
+
+    describe('PS512 (RSA-PSS)', () => {
+      it('should generate correct JSON for single key', () => {
+        const result = generate({
+          key: testKeys.rsaPss,
+          algorithm: 'PS512',
+        });
+
+        const parsed = JSON.parse(result) as ParsedResult;
+        expect(parsed.publicKeys).toHaveLength(1);
+        expect(parsed.publicKeys[0]).toEqual({
+          id: '1',
+          alg: 'PS512',
+          publicKey: normalizeHex(testKeys.rsaPss),
+        });
+      });
+    });
+
+    describe('ES384 (ECDSA)', () => {
+      it('should generate correct JSON for single key', () => {
+        const result = generate({
+          key: testKeys.ecdsa,
+          algorithm: 'ES384',
+        });
+
+        const parsed = JSON.parse(result) as ParsedResult;
+        expect(parsed.publicKeys).toHaveLength(1);
+        expect(parsed.publicKeys[0]).toEqual({
+          id: '1',
+          alg: 'ES384',
+          publicKey: `0x${testKeys.ecdsa}`,
+        });
+      });
+    });
+
+    describe('ES512 (ECDSA)', () => {
+      it('should generate correct JSON for single key', () => {
+        const result = generate({
+          key: testKeys.ecdsa,
+          algorithm: 'ES512',
+        });
+
+        const parsed = JSON.parse(result) as ParsedResult;
+        expect(parsed.publicKeys).toHaveLength(1);
+        expect(parsed.publicKeys[0]).toEqual({
+          id: '1',
+          alg: 'ES512',
+          publicKey: `0x${testKeys.ecdsa}`,
         });
       });
     });
@@ -115,11 +198,11 @@ describe('generate', () => {
       const result = generate(
         {
           key: testKeys.rsassa,
-          algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+          algorithm: 'RS256',
         },
         {
           key: testKeys.ecdsa,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         }
       );
 
@@ -127,12 +210,12 @@ describe('generate', () => {
       expect(parsed.publicKeys).toHaveLength(2);
       expect(parsed.publicKeys[0]).toEqual({
         id: '1',
-        alg: 'RSASSA-PKCS1-v1_5',
+        alg: 'RS256',
         publicKey: `0x${testKeys.rsassa}`,
       });
       expect(parsed.publicKeys[1]).toEqual({
         id: '2',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: `0x${testKeys.ecdsa}`,
       });
     });
@@ -141,15 +224,15 @@ describe('generate', () => {
       const result = generate(
         {
           key: testKeys.rsassa,
-          algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+          algorithm: 'RS256',
         },
         {
           key: testKeys.ecdsa,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         },
         {
           key: testKeys.ed25519,
-          algorithm: SigningAlgorithmName.Ed25519,
+          algorithm: 'EdDSA',
         }
       );
 
@@ -157,71 +240,62 @@ describe('generate', () => {
       expect(parsed.publicKeys).toHaveLength(3);
       expect(parsed.publicKeys[0]).toEqual({
         id: '1',
-        alg: 'RSASSA-PKCS1-v1_5',
+        alg: 'RS256',
         publicKey: `0x${testKeys.rsassa}`,
       });
       expect(parsed.publicKeys[1]).toEqual({
         id: '2',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: `0x${testKeys.ecdsa}`,
       });
       expect(parsed.publicKeys[2]).toEqual({
         id: '3',
-        alg: 'Ed25519',
+        alg: 'EdDSA',
         publicKey: `0x${testKeys.ed25519}`,
       });
     });
 
-    it('should generate correct JSON for all five algorithms', () => {
+    it('should generate correct JSON for all four algorithms', () => {
       const result = generate(
         {
           key: testKeys.rsassa,
-          algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+          algorithm: 'RS256',
         },
         {
           key: testKeys.rsaPss,
-          algorithm: SigningAlgorithmName.RSA_PSS,
+          algorithm: 'PS256',
         },
         {
           key: testKeys.ecdsa,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         },
         {
           key: testKeys.ed25519,
-          algorithm: SigningAlgorithmName.Ed25519,
-        },
-        {
-          key: testKeys.ed448,
-          algorithm: SigningAlgorithmName.Ed448,
+          algorithm: 'EdDSA',
         }
       );
 
       const parsed = JSON.parse(result) as ParsedResult;
-      expect(parsed.publicKeys).toHaveLength(5);
+      expect(parsed.publicKeys).toHaveLength(4);
       expect(parsed.publicKeys[0]).toEqual({
         id: '1',
-        alg: 'RSASSA-PKCS1-v1_5',
+        alg: 'RS256',
         publicKey: `0x${testKeys.rsassa}`,
       });
       expect(parsed.publicKeys[1]).toEqual({
         id: '2',
-        alg: 'RSA-PSS',
-        publicKey: `0x${testKeys.rsaPss}`,
+        alg: 'PS256',
+        publicKey: normalizeHex(testKeys.rsaPss),
       });
       expect(parsed.publicKeys[2]).toEqual({
         id: '3',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: `0x${testKeys.ecdsa}`,
       });
       expect(parsed.publicKeys[3]).toEqual({
         id: '4',
-        alg: 'Ed25519',
+        alg: 'EdDSA',
         publicKey: `0x${testKeys.ed25519}`,
-      });
-      expect(parsed.publicKeys[4]).toEqual({
-        id: '5',
-        alg: 'Ed448',
-        publicKey: `0x${testKeys.ed448}`,
       });
     });
 
@@ -232,11 +306,11 @@ describe('generate', () => {
       const result = generate(
         {
           key: testKeys.ecdsa,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         },
         {
           key: alternateEcdsaKey,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         }
       );
 
@@ -244,12 +318,12 @@ describe('generate', () => {
       expect(parsed.publicKeys).toHaveLength(2);
       expect(parsed.publicKeys[0]).toEqual({
         id: '1',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: `0x${testKeys.ecdsa}`,
       });
       expect(parsed.publicKeys[1]).toEqual({
         id: '2',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: `0x${alternateEcdsaKey}`,
       });
     });
@@ -268,7 +342,8 @@ describe('generate', () => {
       expect(() => {
         generate({
           key: testKeys.rsassa,
-          algorithm: 'INVALID_ALGORITHM' as SigningAlgorithmName,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+          algorithm: 'INVALID_ALGORITHM' as any,
         });
       }).toThrow();
     });
@@ -276,43 +351,43 @@ describe('generate', () => {
     it('should preserve key order in output', () => {
       const result = generate(
         {
-          key: testKeys.ed448,
-          algorithm: SigningAlgorithmName.Ed448,
+          key: testKeys.ed25519,
+          algorithm: 'EdDSA',
         },
         {
           key: testKeys.rsassa,
-          algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+          algorithm: 'RS256',
         },
         {
           key: testKeys.ecdsa,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         }
       );
 
       const parsed = JSON.parse(result) as ParsedResult;
       expect(parsed.publicKeys).toHaveLength(3);
-      expect(parsed.publicKeys[0].alg).toBe('Ed448');
-      expect(parsed.publicKeys[1].alg).toBe('RSASSA-PKCS1-v1_5');
-      expect(parsed.publicKeys[2].alg).toBe('ECDSA');
+      expect(parsed.publicKeys[0].alg).toBe('EdDSA');
+      expect(parsed.publicKeys[1].alg).toBe('RS256');
+      expect(parsed.publicKeys[2].alg).toBe('ES256');
     });
 
     it('should assign sequential IDs regardless of algorithm type', () => {
       const result = generate(
         {
           key: testKeys.ed25519,
-          algorithm: SigningAlgorithmName.Ed25519,
+          algorithm: 'EdDSA',
         },
         {
           key: testKeys.rsaPss,
-          algorithm: SigningAlgorithmName.RSA_PSS,
+          algorithm: 'PS256',
         },
         {
-          key: testKeys.ed448,
-          algorithm: SigningAlgorithmName.Ed448,
+          key: testKeys.rsassa,
+          algorithm: 'RS256',
         },
         {
           key: testKeys.ecdsa,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         }
       );
 
@@ -331,14 +406,14 @@ describe('generate', () => {
 
       const result = generate({
         key: keyWithPrefix,
-        algorithm: SigningAlgorithmName.ECDSA,
+        algorithm: 'ES256',
       });
 
       const parsed = JSON.parse(result) as ParsedResult;
       expect(parsed.publicKeys).toHaveLength(1);
       expect(parsed.publicKeys[0]).toEqual({
         id: '1',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: keyWithPrefix, // Should remain unchanged
       });
     });
@@ -346,14 +421,14 @@ describe('generate', () => {
     it('should add 0x prefix to keys without prefix', () => {
       const result = generate({
         key: testKeys.ecdsa,
-        algorithm: SigningAlgorithmName.ECDSA,
+        algorithm: 'ES256',
       });
 
       const parsed = JSON.parse(result) as ParsedResult;
       expect(parsed.publicKeys).toHaveLength(1);
       expect(parsed.publicKeys[0]).toEqual({
         id: '1',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: `0x${testKeys.ecdsa}`,
       });
     });
@@ -365,11 +440,11 @@ describe('generate', () => {
       const result = generate(
         {
           key: keyWithPrefix,
-          algorithm: SigningAlgorithmName.RSASSA_PKCS1_v1_5,
+          algorithm: 'RS256',
         },
         {
           key: keyWithoutPrefix,
-          algorithm: SigningAlgorithmName.ECDSA,
+          algorithm: 'ES256',
         }
       );
 
@@ -377,12 +452,12 @@ describe('generate', () => {
       expect(parsed.publicKeys).toHaveLength(2);
       expect(parsed.publicKeys[0]).toEqual({
         id: '1',
-        alg: 'RSASSA-PKCS1-v1_5',
+        alg: 'RS256',
         publicKey: keyWithPrefix, // Should preserve existing prefix
       });
       expect(parsed.publicKeys[1]).toEqual({
         id: '2',
-        alg: 'ECDSA',
+        alg: 'ES256',
         publicKey: `0x${keyWithoutPrefix}`, // Should add prefix
       });
     });
@@ -392,13 +467,31 @@ describe('generate', () => {
 
       const result = generate({
         key: keyWithPrefix,
-        algorithm: SigningAlgorithmName.Ed25519,
+        algorithm: 'EdDSA',
       });
 
       const parsed = JSON.parse(result) as ParsedResult;
       expect(parsed.publicKeys).toHaveLength(1);
       expect(parsed.publicKeys[0].publicKey).toBe(keyWithPrefix);
       expect(parsed.publicKeys[0].publicKey).not.toContain('0x0x');
+    });
+
+    it('should throw for non-hex characters', () => {
+      expect(() =>
+        generate({
+          key: 'not-hex',
+          algorithm: 'ES256',
+        })
+      ).toThrow(/Invalid hex string/);
+    });
+
+    it('should throw for invalid hex with 0x prefix', () => {
+      expect(() =>
+        generate({
+          key: '0xzzzz',
+          algorithm: 'ES256',
+        })
+      ).toThrow(/Invalid hex string/);
     });
   });
 });

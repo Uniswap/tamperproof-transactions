@@ -24,6 +24,14 @@ export function toHex(buffer: ArrayBuffer | Uint8Array): string {
     .join('');
 }
 
+export function normalizeHex(input: string, with0x = true): string {
+  const cleaned = input.replace(/^0x/i, '').replace(/\s/g, '');
+  const padded = cleaned.length % 2 === 1 ? `0${cleaned}` : cleaned;
+  const bytes = fromHex(padded);
+  const hex = toHex(bytes);
+  return with0x ? `0x${hex}` : hex;
+}
+
 export function fromBase64(base64: string): Uint8Array {
   const cleanBase64 = base64.replace(/\s/g, '');
 

@@ -1,12 +1,13 @@
-import { SigningAlgorithmName, isSigningAlgorithm } from '../algorithms';
+import { SIGNING_ALGORITHM_CONFIG } from '../algorithms';
+import { normalizeHex } from '../utils/hex';
 export type PublicKey = {
-  key: string;
-  algorithm: SigningAlgorithmName;
+  key: string; // hex string
+  algorithm: keyof typeof SIGNING_ALGORITHM_CONFIG;
 };
 
 export function generate(...publicKeys: PublicKey[]): string {
   const pubKeys: object[] = publicKeys.map((publicKey, index) => {
-    if (!isSigningAlgorithm(publicKey.algorithm)) {
+    if (!Object.keys(SIGNING_ALGORITHM_CONFIG).includes(publicKey.algorithm)) {
       throw new Error(
         `Unsupported signing algorithm: ${String(publicKey.algorithm)}`
       );
@@ -16,9 +17,7 @@ export function generate(...publicKeys: PublicKey[]): string {
       // EIP states 1-indexed string
       id: (index + 1).toString(),
       alg: publicKey.algorithm,
-      publicKey: publicKey.key.startsWith('0x')
-        ? publicKey.key
-        : `0x${publicKey.key}`,
+      publicKey: normalizeHex(publicKey.key),
     };
   });
 
