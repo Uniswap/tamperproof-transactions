@@ -75,9 +75,10 @@ describe('fromHex', () => {
       );
     });
 
-    it('should handle partially invalid hex characters with 0x prefix', () => {
-      const result = fromHex('0x48656g6c6f');
-      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6, 0x6c, 0x6f]));
+    it('should throw error for partially invalid hex characters with 0x prefix', () => {
+      expect(() => fromHex('0x48656g6c6f')).toThrow(
+        'Invalid hex string: 48656g6c6f'
+      );
     });
   });
 
@@ -94,20 +95,20 @@ describe('fromHex', () => {
       );
     });
 
-    it('should handle partially invalid hex characters (parseInt behavior)', () => {
-      // Note: parseInt('4g', 16) returns 4, so this doesn't throw
-      const result = fromHex('48656g6c6f');
-      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6, 0x6c, 0x6f]));
+    it('should throw error for partially invalid hex characters', () => {
+      expect(() => fromHex('48656g6c6f')).toThrow(
+        'Invalid hex string: 48656g6c6f'
+      );
     });
 
     it('should throw error for completely non-hex characters', () => {
       expect(() => fromHex('hello!')).toThrow('Invalid hex string: hello!');
     });
 
-    it('should handle mixed valid/invalid hex characters (parseInt behavior)', () => {
-      // Note: parseInt('6x', 16) returns 6, so this doesn't throw
-      const result = fromHex('48656c6x6f');
-      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6, 0x6f]));
+    it('should throw error for mixed valid/invalid hex characters', () => {
+      expect(() => fromHex('48656c6x6f')).toThrow(
+        'Invalid hex string: 48656c6x6f'
+      );
     });
   });
 });

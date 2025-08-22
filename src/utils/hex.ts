@@ -1,19 +1,16 @@
 export function fromHex(hex: string): Uint8Array {
-  // Remove 0x prefix if present, then clean whitespace
   const cleanHex = hex.replace(/^0x/i, '').replace(/\s/g, '');
   if (cleanHex.length % 2 !== 0) {
     throw new Error('Invalid hex string: length must be even');
   }
-
-  const bytes = [];
-  for (let i = 0; i < cleanHex.length; i += 2) {
-    const byte = parseInt(cleanHex.slice(i, i + 2), 16);
-    if (isNaN(byte)) {
-      throw new Error(`Invalid hex string: ${cleanHex}`);
-    }
-    bytes.push(byte);
+  if (!/^[0-9a-fA-F]*$/.test(cleanHex)) {
+    throw new Error(`Invalid hex string: ${cleanHex}`);
   }
-  return new Uint8Array(bytes);
+  const out = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    out[i / 2] = Number.parseInt(cleanHex.slice(i, i + 2), 16);
+  }
+  return out;
 }
 
 export function toHex(buffer: ArrayBuffer | Uint8Array): string {
@@ -33,14 +30,6 @@ export function normalizeHex(input: string, with0x = true): string {
 }
 
 export function fromBase64(base64: string): Uint8Array {
-  const cleanBase64 = base64.replace(/\s/g, '');
-
-  const binaryString = atob(cleanBase64);
-  const bytes = new Uint8Array(binaryString.length);
-
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-
-  return bytes;
+  const clean = base64.replace(/\s/g, '');
+  return new Uint8Array(Buffer.from(clean, 'base64'));
 }
