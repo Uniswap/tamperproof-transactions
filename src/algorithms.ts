@@ -98,34 +98,3 @@ export const SIGNING_ALGORITHM_CONFIG = {
     hash: { name: 'SHA-512' },
   },
 } satisfies Record<string, SigningAlgorithmConfig>;
-
-export function getVerifyParamsForPublicKey(
-  publicKey: CryptoKey
-): Algorithm | EcdsaParams | RsaPssParams {
-  const algoName = (publicKey.algorithm as Algorithm).name;
-  if (algoName === 'ECDSA') {
-    const curve = (publicKey.algorithm as EcKeyAlgorithm).namedCurve;
-    const hashName =
-      curve === 'P-256' ? 'SHA-256' : curve === 'P-384' ? 'SHA-384' : 'SHA-512';
-    return { name: 'ECDSA', hash: { name: hashName } } as EcdsaParams;
-  }
-  if (algoName === 'RSA-PSS') {
-    const hashName = (publicKey.algorithm as RsaHashedKeyAlgorithm).hash?.name;
-    const saltLength = ((): number => {
-      if (hashName === 'SHA-256') return 32;
-      if (hashName === 'SHA-384') return 48;
-      if (hashName === 'SHA-512') return 64;
-      const match = /SHA-(\d+)/.exec(hashName ?? '');
-      if (match) {
-        const bits = Number(match[1]);
-        if (!Number.isNaN(bits)) return Math.floor(bits / 8);
-      }
-      return 32;
-    })();
-    return { name: 'RSA-PSS', saltLength } as RsaPssParams;
-  }
-  if (algoName === 'RSASSA-PKCS1-v1_5') {
-    return { name: 'RSASSA-PKCS1-v1_5' } as Algorithm;
-  }
-  return { name: algoName } as Algorithm;
-}
