@@ -11,6 +11,8 @@ import { DohResolver } from 'dohjs';
 export const PREFIX = 'TWIST=';
 const quadOneResolver = new DohResolver('https://1.1.1.1/dns-query');
 const TIMEOUT = 1000;
+const MAX_MANIFEST_BYTES = 64 * 1024; // 64KB
+const MAX_TWIST_PATH = 1024;
 
 export async function verifyAsyncDns(
   calldata: string,
@@ -52,7 +54,17 @@ export async function verifyAsyncDns(
     );
   }
 
-  const url = new URL(`https://${host}/${twistRecord}`);
+  // Normalize and bound TWIST path; encode path segments
+  twistRecord = twistRecord.replace(/^\/+/, '');
+  if (twistRecord.length > MAX_TWIST_PATH) {
+    throw new Error('TWIST path too long');
+  }
+  const encodedPath = twistRecord
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/');
+
+  const url = new URL(`https://${host}/${encodedPath}`);
 
   return await verifyAsyncJson(calldata, signature, url, id);
 }
@@ -67,11 +79,31 @@ export async function verifyAsyncJson(
     throw new Error('Manifest must be fetched over HTTPS');
   }
 
-  const response = await fetch(url, { redirect: 'error' });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      redirect: 'error',
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch manifest: HTTP ${response.status}`);
+  }
 
   const ct = response.headers.get('content-type') || '';
   if (!/^application\/json(?:;|$)/i.test(ct)) {
     throw new Error('Manifest Content-Type must be application/json');
+  }
+
+  const cl = response.headers.get('content-length');
+  if (cl && Number(cl) > MAX_MANIFEST_BYTES) {
+    throw new Error('Manifest too large');
   }
 
   const data = (await response.json()) as {

@@ -213,6 +213,53 @@ describe('verify.ts', () => {
         verifyAsyncDns('data', 'signature', 'example.com', '1')
       ).rejects.toThrow(); // Will fail at crypto step, but parsing succeeded
     });
+
+    it('sanitizes leading slashes and encodes TWIST path segments', async () => {
+      mockQuery.mockResolvedValue({
+        answers: [{ data: `${PREFIX}//api v1/ƙeys?bad#frag` }],
+      });
+
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type' ? 'application/json' : '0',
+        },
+        json: () =>
+          Promise.resolve({
+            publicKeys: [{ id: '1', alg: 'RS256', publicKey: '00' }],
+          }),
+      });
+
+      await expect(
+        verifyAsyncDns('data', 'signature', 'example.com', '1')
+      ).rejects.toThrow();
+
+      expect(global.fetch).toHaveBeenCalled();
+      const call = (global.fetch as jest.Mock).mock.calls[0] as unknown[];
+      const urlArg = call[0] as URL;
+      expect(urlArg).toBeInstanceOf(URL);
+      // Leading slashes removed, segments encoded
+      expect(urlArg.href).toBe(
+        'https://example.com/api%20v1/%C6%99eys%3Fbad%23frag'
+      );
+    });
+
+    it('rejects when TWIST path exceeds maximum length', async () => {
+      const longPath = 'a'.repeat(1025);
+      mockQuery.mockResolvedValue({
+        answers: [{ data: `${PREFIX}${longPath}` }],
+      });
+
+      global.fetch = jest.fn();
+
+      await expect(
+        verifyAsyncDns('data', 'signature', 'example.com', '1')
+      ).rejects.toThrow('TWIST path too long');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifyAsyncJson', () => {
@@ -239,8 +286,23 @@ describe('verify.ts', () => {
       ).rejects.toThrow('Manifest must be fetched over HTTPS');
     });
 
+    it('throws if HTTP status is not ok', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        headers: { get: () => null },
+        json: () => Promise.resolve({ publicKeys: [] }),
+      });
+
+      await expect(
+        verifyAsyncJson('data', 'signature', httpsUrl, '1')
+      ).rejects.toThrow('Failed to fetch manifest: HTTP 404');
+    });
+
     it('throws if Content-Type is not application/json', async () => {
       global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
         headers: { get: () => 'text/plain' },
         json: () => Promise.resolve({ publicKeys: [] }),
       });
@@ -252,7 +314,16 @@ describe('verify.ts', () => {
 
     it('throws if key id is not found', async () => {
       global.fetch = jest.fn().mockResolvedValue({
-        headers: { get: () => 'application/json' },
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type'
+              ? 'application/json'
+              : name === 'content-length'
+                ? '0'
+                : null,
+        },
         json: () => Promise.resolve({ publicKeys: [] }),
       });
 
@@ -263,7 +334,16 @@ describe('verify.ts', () => {
 
     it('throws if duplicate key ids are found', async () => {
       global.fetch = jest.fn().mockResolvedValue({
-        headers: { get: () => 'application/json' },
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type'
+              ? 'application/json'
+              : name === 'content-length'
+                ? '0'
+                : null,
+        },
         json: () =>
           Promise.resolve({
             publicKeys: [
@@ -282,7 +362,16 @@ describe('verify.ts', () => {
 
     it('throws if algorithm is unsupported', async () => {
       global.fetch = jest.fn().mockResolvedValue({
-        headers: { get: () => 'application/json' },
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type'
+              ? 'application/json'
+              : name === 'content-length'
+                ? '0'
+                : null,
+        },
         json: () =>
           Promise.resolve({
             publicKeys: [{ id: '1', alg: 'UNSUPPORTED', publicKey: '00' }],
@@ -310,7 +399,16 @@ describe('verify.ts', () => {
       const spkiHex = toHex(spki);
 
       global.fetch = jest.fn().mockResolvedValue({
-        headers: { get: () => 'application/json' },
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type'
+              ? 'application/json'
+              : name === 'content-length'
+                ? '0'
+                : null,
+        },
         json: () =>
           Promise.resolve({
             publicKeys: [{ id: '1', alg: 'RS256', publicKey: spkiHex }],
@@ -320,6 +418,93 @@ describe('verify.ts', () => {
       await expect(
         verifyAsyncJson(data, signatureHex, httpsUrl, '1')
       ).resolves.toBe(true);
+    });
+
+    it('accepts Content-Type with charset parameter', async () => {
+      const privateKey = localRsaSSAKeyPair.privateKey;
+      const publicKey = localRsaSSAKeyPair.publicKey;
+
+      const signature = await webcrypto.subtle.sign(
+        SIGNING_ALGORITHM_CONFIG.RS256,
+        privateKey,
+        new TextEncoder().encode(data)
+      );
+
+      const signatureHex = toHex(signature);
+
+      const spki = await webcrypto.subtle.exportKey('spki', publicKey);
+      const spkiHex = toHex(spki);
+
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type' ? 'application/json; charset=utf-8' : '0',
+        },
+        json: () =>
+          Promise.resolve({
+            publicKeys: [{ id: '1', alg: 'RS256', publicKey: spkiHex }],
+          }),
+      });
+
+      await expect(
+        verifyAsyncJson(data, signatureHex, httpsUrl, '1')
+      ).resolves.toBe(true);
+    });
+
+    it('throws if manifest exceeds maximum size', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type'
+              ? 'application/json'
+              : name === 'content-length'
+                ? String(64 * 1024 + 1)
+                : null,
+        },
+        json: () => Promise.resolve({ publicKeys: [] }),
+      });
+
+      await expect(
+        verifyAsyncJson('data', 'signature', httpsUrl, '1')
+      ).rejects.toThrow('Manifest too large');
+    });
+
+    it('uses strict fetch options', async () => {
+      const publicKey = localRsaSSAKeyPair.publicKey;
+      const spki = await webcrypto.subtle.exportKey('spki', publicKey);
+      const spkiHex = toHex(spki);
+      const signature = await webcrypto.subtle.sign(
+        SIGNING_ALGORITHM_CONFIG.RS256,
+        localRsaSSAKeyPair.privateKey,
+        new TextEncoder().encode(data)
+      );
+      const signatureHex = toHex(signature);
+
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name === 'content-type' ? 'application/json' : '0',
+        },
+        json: () =>
+          Promise.resolve({
+            publicKeys: [{ id: '1', alg: 'RS256', publicKey: spkiHex }],
+          }),
+      });
+
+      await verifyAsyncJson(data, signatureHex, httpsUrl, '1');
+
+      expect(global.fetch).toHaveBeenCalled();
+      const call = (global.fetch as jest.Mock).mock.calls[0] as unknown[];
+      const options = call[1] as RequestInit;
+      expect(options.redirect).toBe('error');
+      expect(options.headers).toEqual({ Accept: 'application/json' });
+      expect(options.signal).toBeDefined();
     });
   });
 
@@ -585,6 +770,14 @@ describe('verify.ts', () => {
       expect(await verify(data, signatureString, publicKey2, 'RS256')).toBe(
         false
       );
+    });
+
+    it('returns false for malformed ECDSA signature length (ES256)', async () => {
+      const publicKey = ecdsaKeyPair.publicKey;
+      const invalidLengthHex = 'aa'.repeat(63); // 63 bytes instead of 64
+      await expect(
+        verify(data, invalidLengthHex, publicKey, 'ES256')
+      ).resolves.toBe(false);
     });
   });
 });
