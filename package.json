@@ -28,7 +28,6 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "run:test-sign": "yarn build && node --experimental-specifier-resolution=node dist/scripts/test-sign.js",
     "prepare": "husky"
   },
   "publishConfig": {
