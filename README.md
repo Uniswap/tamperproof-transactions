@@ -12,117 +12,126 @@ npm install @uniswap/tamperproof-transactions
 
 ## API
 
-### SigningAlgorithm
+### Supported algorithms
+
+Algorithms are specified using standard JWS-style names. The library currently supports:
 
 ```ts
-export enum SigningAlgorithm {
-  RSA = 'RSA-SHA256',
-  RSA_PSS = 'RSA-PSS',
-  ECDSA = 'SHA256',
-}
+'ES256' | 'ES384' | 'ES512' | 'EdDSA' | 'PS256' | 'PS384' | 'PS512' | 'RS256' | 'RS384' | 'RS512'
 ```
 
 ---
 
-### `sign(data: string, privateKey: KeyObject, algorithm: SigningAlgorithm): string`
+### `sign(data, privateKeyHex, algorithm): Promise<string>`
 
-Signs a string using the provided private key and algorithm.
+Signs input using Web Crypto with the given algorithm.
+
+- **data**: `string | object`. If an object is provided, it is serialized to bytes using canonical JSON (sorted keys, `undefined` dropped).
+- **privateKeyHex**: PKCS#8-encoded private key as a hex string (with or without `0x`).
+- **algorithm**: one of the supported algorithm names listed above.
+- Returns a hex string signature prefixed with `0x`. For ECDSA algorithms, the signature is raw `r || s` bytes.
 
 #### Example
 
 ```ts
-import { sign, SigningAlgorithm } from '@uniswap/tamperproof-transactions';
-import { generateKeyPairSync } from 'crypto';
+import { sign } from '@uniswap/tamperproof-transactions';
 
-const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-const data = 'hello world';
-const signature = sign(data, privateKey, SigningAlgorithm.RSA);
+const data = { method: 'eth_sendTransaction', params: { to: '0xabc...', value: '0x1' } };
+const privateKeyHex = '0x...'; // PKCS#8 private key, hex-encoded
+const signature = await sign(data, privateKeyHex, 'RS256');
 ```
 
 ---
 
-### `verifySync(calldata: string, signature: string, algorithm: SigningAlgorithm, publicKey: KeyObject): boolean`
+### `verifyAsyncJson(calldata, signatureHex, url, id): Promise<boolean>`
 
-Verifies a signature synchronously.
+Verifies a signature by fetching a manifest of public keys (over HTTPS) and selecting the key with matching `id`.
 
-#### Example
-
-```ts
-import {
-  sign,
-  verifySync,
-  SigningAlgorithm,
-} from '@uniswap/tamperproof-transactions';
-import { generateKeyPairSync } from 'crypto';
-
-const { privateKey, publicKey } = generateKeyPairSync('rsa', {
-  modulusLength: 2048,
-});
-const data = 'hello world';
-const signature = sign(data, privateKey, SigningAlgorithm.RSA);
-
-const isValid = verifySync(data, signature, SigningAlgorithm.RSA, publicKey);
-```
-
----
-
-### `verifyAsyncDns(calldata: string, signature: string, host: string, id?: number): Promise<boolean>`
-
-Verifies a signature by fetching a public key from a DNS TXT record.
-
-#### Example
-
-```ts
-import { verifyAsyncDns } from '@uniswap/tamperproof-transactions';
-
-const isValid = await verifyAsyncDns('data', 'signature', 'example.com');
-```
-
----
-
-### `verifyAsyncJson(calldata: string, signature: string, url: string, id?: number): Promise<boolean>`
-
-Verifies a signature by fetching a public key from a JSON endpoint.
+- **calldata**: `string | object` (object is canonicalized the same way as in `sign`).
+- **signatureHex**: hex string signature (with or without `0x`).
+- **url**: a `URL` instance pointing to the manifest (must be `https:`).
+- **id**: string identifier of the public key within the manifest.
 
 #### Example
 
 ```ts
 import { verifyAsyncJson } from '@uniswap/tamperproof-transactions';
 
-const isValid = await verifyAsyncJson(
-  'data',
-  'signature',
-  'https://example.com/keys.json'
-);
+const url = new URL('https://example.com/keys.json');
+const ok = await verifyAsyncJson({ foo: 'bar' }, '0x...', url, '1');
 ```
 
 ---
 
-### `generate(...publicKeys: PublicKey[]): string`
+### `verifyAsyncDns(calldata, signatureHex, host, id): Promise<boolean>`
 
-Generates a JSON string containing an array of public keys.
+Resolves a DNS TXT record for `host` using DNS-over-HTTPS, extracts a `TWIST=` path, fetches the manifest over HTTPS, and verifies the signature using the key with the provided `id`.
+
+- **calldata**: `string`.
+- **signatureHex**: hex string signature (with or without `0x`).
+- **host**: domain name to query for a TXT record containing `TWIST=`.
+- **id**: string identifier of the public key within the manifest.
+
+#### Example
+
+```ts
+import { verifyAsyncDns } from '@uniswap/tamperproof-transactions';
+
+const ok = await verifyAsyncDns('hello', '0x...', 'example.com', '1');
+```
+
+---
+
+### `verify(calldata, signatureHex, publicKey, algorithm): Promise<boolean>`
+
+Lower-level verification helper if you already have a `CryptoKey` public key object.
+
+- **publicKey**: a Web Crypto `CryptoKey` imported for verification.
+- **algorithm**: one of the supported algorithm names listed above.
+
+---
+
+### `generate(...publicKeys): string`
+
+Generates a JSON manifest string containing an array of public keys.
 
 #### Types
 
 ```ts
 type PublicKey = {
-  key: string;
-  algorithm: SigningAlgorithm;
+  key: string; // SPKI-encoded public key as hex (with or without 0x)
+  algorithm: 'ES256' | 'ES384' | 'ES512' | 'EdDSA' | 'PS256' | 'PS384' | 'PS512' | 'RS256' | 'RS384' | 'RS512';
 };
+```
+
+The returned JSON has the shape:
+
+```json
+{
+  "publicKeys": [
+    { "id": "1", "alg": "RS256", "publicKey": "0x..." }
+  ]
+}
 ```
 
 #### Example
 
 ```ts
-import { generate, SigningAlgorithm } from '@uniswap/tamperproof-transactions';
+import { generate } from '@uniswap/tamperproof-transactions';
 
-const publicKey = {
-  key: 'hex-encoded-key',
-  algorithm: SigningAlgorithm.RSA,
-};
-
-const json = generate(publicKey);
+const json = generate({ key: '0x...', algorithm: 'RS256' });
 ```
+
+---
+
+### Utilities
+
+The following helpers are also exported:
+
+- `canonicalStringify(value: unknown): string`
+- `serializeRequestPayload<T>(value: T): Uint8Array`
+
+These are used internally to canonicalize objects before signing/verifying.
 
 ---
 
