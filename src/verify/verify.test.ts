@@ -7,6 +7,7 @@ jest.mock('dohjs', () => ({
 }));
 
 import { verify, verifyAsyncDns, verifyAsyncJson, PREFIX } from './verify';
+import { canonicalStringify } from '../utils/canonicalJson';
 import { toHex } from '../utils/hex';
 import { SIGNING_ALGORITHM_CONFIG } from '../algorithms';
 const webcrypto = globalThis.crypto;
@@ -744,6 +745,22 @@ describe('verify.ts', () => {
           true
         );
       });
+    });
+
+    it('verifies object payload using canonical JSON (RS256)', async () => {
+      const payload = { method: 'foo', params: { y: 2, x: 1 } };
+      const canonical = canonicalStringify(payload);
+
+      const signature = await webcrypto.subtle.sign(
+        SIGNING_ALGORITHM_CONFIG.RS256,
+        rsaSSAKeyPair.privateKey,
+        new TextEncoder().encode(canonical)
+      );
+      const signatureHex = toHex(signature);
+
+      await expect(
+        verify(payload, signatureHex, rsaSSAKeyPair.publicKey, 'RS256')
+      ).resolves.toBe(true);
     });
 
     it('returns false for incorrect public key', async () => {

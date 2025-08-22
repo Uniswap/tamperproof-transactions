@@ -1,4 +1,5 @@
 import { sign } from './sign';
+import { canonicalStringify } from '../utils/canonicalJson';
 
 const data = 'test data';
 const privateKeyECDSAHex =
@@ -141,6 +142,21 @@ describe('sign', () => {
       expect(result).toBe(
         '0x0804a2a72f52d7afdaf18b78e1a48891a729be1bdde2b30366fd00a128bc37243aa75c36e8b0a93b71fe7dfd7b67bee0838e25acd26b8a81ad7074ae38f84102'
       );
+    });
+  });
+
+  describe('Object payload canonicalization', () => {
+    it('signs object payload using canonical JSON (RS256 deterministic)', async () => {
+      const payload = {
+        method: 'eth_call',
+        params: { b: 2, a: 1, c: undefined as unknown as never },
+      };
+      const canonical = canonicalStringify(payload);
+
+      const sigObj = await sign(payload, privateKeyRSAHex, 'RS256');
+      const sigStr = await sign(canonical, privateKeyRSAHex, 'RS256');
+
+      expect(sigObj).toBe(sigStr);
     });
   });
 

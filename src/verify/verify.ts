@@ -7,6 +7,7 @@ import {
 import { fromHex } from '../utils/hex';
 import { processTxtRecordData } from '../utils/txtRecord';
 import { DohResolver } from 'dohjs';
+import { serializeRequestPayload } from '../utils/canonicalJson';
 
 export const PREFIX = 'TWIST=';
 const quadOneResolver = new DohResolver('https://1.1.1.1/dns-query');
@@ -70,7 +71,7 @@ export async function verifyAsyncDns(
 }
 
 export async function verifyAsyncJson(
-  calldata: string,
+  calldata: string | object,
   signature: string,
   url: URL,
   id: string
@@ -150,13 +151,16 @@ export async function verifyAsyncJson(
 }
 
 export async function verify(
-  calldata: string,
+  calldata: string | object,
   signature: string,
   publicKey: CryptoKey,
   alg: keyof typeof SIGNING_ALGORITHM_CONFIG
 ): Promise<boolean> {
   const encoder = new TextEncoder();
-  const bufferData = encoder.encode(calldata);
+  const bufferData =
+    typeof calldata === 'string'
+      ? encoder.encode(calldata)
+      : serializeRequestPayload(calldata);
 
   const signatureBytes = fromHex(signature);
 

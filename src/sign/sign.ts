@@ -4,11 +4,12 @@ import {
   SIGNING_ALGORITHM_IMPORT_PARAMS,
 } from '../algorithms';
 import { toHex, fromHex } from '../utils/hex';
+import { serializeRequestPayload } from '../utils/canonicalJson';
 
 const encoder = new TextEncoder();
 
 export async function sign(
-  data: string,
+  data: string | object,
   privateKey: string,
   algorithm: keyof typeof SIGNING_ALGORITHM_CONFIG
 ): Promise<string> {
@@ -19,7 +20,10 @@ export async function sign(
     throw new Error(`Algorithm is not supported: ${String(algorithm)}`);
   }
 
-  const bufferData = encoder.encode(data);
+  const bufferData =
+    typeof data === 'string'
+      ? encoder.encode(data)
+      : serializeRequestPayload(data);
 
   const key = await webcrypto.subtle.importKey(
     'pkcs8',
