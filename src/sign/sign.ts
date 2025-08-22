@@ -14,7 +14,7 @@ export async function sign(
 ): Promise<string> {
   if (
     typeof algorithm !== 'string' ||
-    !Object.hasOwn(SIGNING_ALGORITHM_CONFIG, algorithm)
+    !Object.prototype.hasOwnProperty.call(SIGNING_ALGORITHM_CONFIG, algorithm)
   ) {
     throw new Error(`Algorithm is not supported: ${String(algorithm)}`);
   }

@@ -7,7 +7,12 @@ export type PublicKey = {
 
 export function generate(...publicKeys: PublicKey[]): string {
   const pubKeys: object[] = publicKeys.map((publicKey, index) => {
-    if (!Object.keys(SIGNING_ALGORITHM_CONFIG).includes(publicKey.algorithm)) {
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        SIGNING_ALGORITHM_CONFIG,
+        publicKey.algorithm
+      )
+    ) {
       throw new Error(
         `Unsupported signing algorithm: ${String(publicKey.algorithm)}`
       );

@@ -1,4 +1,5 @@
-import { fromHex, toHex } from './hex';
+import { fromHex, toHex, fromBase64 } from './hex';
+import { Buffer as NodeBuffer } from 'node:buffer';
 
 describe('fromHex', () => {
   describe('valid hex strings', () => {
@@ -220,5 +221,62 @@ describe('round-trip conversion', () => {
     const hexWith0x = `0x${hex}`;
     const resultBytes = fromHex(hexWith0x);
     expect(resultBytes).toEqual(originalBytes);
+  });
+});
+
+describe('fromBase64', () => {
+  let originalAtob: ((s: string) => string) | undefined;
+  type BufferType = typeof NodeBuffer;
+  let originalBuffer: BufferType | undefined;
+
+  beforeEach(() => {
+    originalAtob = (globalThis as { atob?: (s: string) => string }).atob;
+    // Capture Buffer off globalThis in case it is present
+    originalBuffer = (globalThis as { Buffer?: BufferType }).Buffer;
+  });
+
+  afterEach(() => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      originalAtob;
+    (globalThis as { Buffer?: BufferType | undefined }).Buffer = originalBuffer;
+  });
+
+  it('decodes using Node Buffer when atob is not available', () => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      undefined;
+    // Ensure Buffer exists (Node environment)
+    expect(typeof (globalThis as { Buffer?: BufferType }).Buffer).toBe(
+      'function'
+    );
+
+    const bytes = fromBase64('SGVsbG8='); // "Hello"
+    expect(bytes).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+  });
+
+  it('strips whitespace and newlines before decoding', () => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      undefined;
+    const withWhitespace = 'S GV s\n bG8=  ';
+    const bytes = fromBase64(withWhitespace);
+    expect(bytes).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+  });
+
+  it('uses atob when available (browser-like environment)', () => {
+    // Provide an atob stub that decodes base64 to a binary string
+    (globalThis as { atob?: (s: string) => string }).atob = (
+      s: string
+    ): string => NodeBuffer.from(s, 'base64').toString('binary');
+
+    const bytes = fromBase64('SGVsbG8=');
+    expect(bytes).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+  });
+
+  it('throws when neither atob nor Buffer are available', () => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      undefined;
+    (globalThis as { Buffer?: BufferType | undefined }).Buffer = undefined;
+    expect(() => fromBase64('SGVsbG8=')).toThrow(
+      'No base64 decoder available in this environment'
+    );
   });
 });

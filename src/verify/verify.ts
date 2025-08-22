@@ -127,7 +127,12 @@ export async function verifyAsyncJson(
 
   const publicKey = matchingKeys[0];
 
-  if (!Object.hasOwn(SIGNING_ALGORITHM_IMPORT_PARAMS, publicKey.alg)) {
+  if (
+    !Object.prototype.hasOwnProperty.call(
+      SIGNING_ALGORITHM_IMPORT_PARAMS,
+      publicKey.alg
+    )
+  ) {
     throw new Error(`Algorithm is not supported: ${String(publicKey.alg)}`);
   }
   const algorithmKey =
@@ -155,7 +160,7 @@ export async function verify(
 
   const signatureBytes = fromHex(signature);
 
-  if (!Object.hasOwn(SIGNING_ALGORITHM_CONFIG, alg)) {
+  if (!Object.prototype.hasOwnProperty.call(SIGNING_ALGORITHM_CONFIG, alg)) {
     throw new Error(`Algorithm is not supported: ${String(alg)}`);
   }
   const algConfig: SigningAlgorithmConfig = SIGNING_ALGORITHM_CONFIG[alg];

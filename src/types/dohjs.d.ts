@@ -4,7 +4,7 @@ declare module 'dohjs' {
     type: number;
     class: number;
     ttl: number;
-    data: string | Buffer;
+    data: string | Uint8Array | ArrayBuffer;
     flush?: boolean;
   }
 

@@ -1,19 +1,19 @@
-export function parseTxtRecord(buffer: Buffer): string {
+export function parseTxtRecord(buffer: ArrayBuffer | Uint8Array): string {
+  const view = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const decoder = new TextDecoder();
   let result = '';
   let offset = 0;
 
-  while (offset < buffer.length) {
-    const length = buffer.readUInt8(offset);
+  while (offset < view.length) {
+    const length = view[offset];
     offset += 1;
 
-    if (offset + length > buffer.length) {
+    if (offset + length > view.length) {
       throw new Error('Invalid TXT record format: length exceeds buffer size');
     }
 
-    const stringData = buffer
-      .subarray(offset, offset + length)
-      .toString('utf8');
-    result += stringData;
+    const slice = view.subarray(offset, offset + length);
+    result += decoder.decode(slice);
     offset += length;
   }
 
@@ -23,10 +23,10 @@ export function parseTxtRecord(buffer: Buffer): string {
 export function processTxtRecordData(data: unknown): string {
   if (typeof data === 'string') {
     return data;
-  } else if (Buffer.isBuffer(data)) {
-    return parseTxtRecord(data);
-  } else {
-    // Fallback for other types - cast to unknown first to avoid type errors
-    return (data as { toString(): string }).toString();
   }
+  if (data instanceof Uint8Array || data instanceof ArrayBuffer) {
+    return parseTxtRecord(data);
+  }
+  // Fallback for other types
+  return String(data);
 }

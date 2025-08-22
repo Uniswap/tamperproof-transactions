@@ -31,5 +31,23 @@ export function normalizeHex(input: string, with0x = true): string {
 
 export function fromBase64(base64: string): Uint8Array {
   const clean = base64.replace(/\s/g, '');
-  return new Uint8Array(Buffer.from(clean, 'base64'));
+  // Browser: use atob when available
+  if (typeof globalThis.atob === 'function') {
+    const binaryString = globalThis.atob(clean);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  }
+  // Node: use Buffer when available without forcing bundler polyfills
+  const NodeBuffer = (
+    globalThis as unknown as {
+      Buffer?: typeof Buffer;
+    }
+  ).Buffer;
+  if (NodeBuffer && typeof NodeBuffer.from === 'function') {
+    return new Uint8Array(NodeBuffer.from(clean, 'base64'));
+  }
+  throw new Error('No base64 decoder available in this environment');
 }
