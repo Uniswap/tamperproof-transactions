@@ -35,5 +35,5 @@ export async function sign(
     bufferData
   );
 
-  return toHex(signature);
+  return `0x${toHex(signature)}`;
 }
