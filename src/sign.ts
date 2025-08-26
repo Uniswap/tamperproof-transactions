@@ -8,6 +8,7 @@ import { serializeRequestPayload } from './utils/canonicalJson';
 import { ERROR_ALGORITHM_NOT_SUPPORTED } from './constants/errors';
 
 const encoder = new TextEncoder();
+const PRIVATE_KEY_FORMAT = 'pkcs8';
 
 export async function sign(
   data: string | object,
@@ -27,7 +28,7 @@ export async function sign(
       : serializeRequestPayload(data);
 
   const key = await webcrypto.subtle.importKey(
-    'pkcs8',
+    PRIVATE_KEY_FORMAT,
     fromHex(privateKey),
     SIGNING_ALGORITHM_IMPORT_PARAMS[algorithm],
     false,

@@ -13,6 +13,7 @@ const quadOneResolver = new DohResolver('https://1.1.1.1/dns-query');
 const TIMEOUT = 1000;
 const MAX_MANIFEST_BYTES = 64 * 1024; // 64KB
 const MAX_TWIST_PATH = 1024;
+const PUBLIC_KEY_FORMAT = 'spki';
 
 export async function verifyAsyncDns(
   calldata: string,
@@ -139,7 +140,7 @@ export async function verifyAsyncJson(
     publicKey.alg as keyof typeof SIGNING_ALGORITHM_IMPORT_PARAMS;
 
   const publicKeyObject = await webcrypto.subtle.importKey(
-    'spki',
+    PUBLIC_KEY_FORMAT,
     fromHex(publicKey.publicKey),
     SIGNING_ALGORITHM_IMPORT_PARAMS[algorithmKey],
     false,
