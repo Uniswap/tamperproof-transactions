@@ -3,9 +3,9 @@ import {
   SigningAlgorithmConfig,
   SIGNING_ALGORITHM_CONFIG,
   SIGNING_ALGORITHM_IMPORT_PARAMS,
-} from '../algorithms';
-import { fromHex } from '../utils/hex';
-import { processTxtRecordData } from '../utils/txtRecord';
+} from './algorithms';
+import { fromHex } from './utils/hex';
+import { processTxtRecordData } from './utils/txtRecord';
 import { DohResolver } from 'dohjs';
 
 export const PREFIX = 'TWIST=';

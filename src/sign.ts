@@ -2,9 +2,9 @@ const webcrypto = globalThis.crypto;
 import {
   SIGNING_ALGORITHM_CONFIG,
   SIGNING_ALGORITHM_IMPORT_PARAMS,
-} from '../algorithms';
-import { toHex, fromHex } from '../utils/hex';
-import { serializeRequestPayload } from '../utils/canonicalJson';
+} from './algorithms';
+import { toHex, fromHex } from './utils/hex';
+import { serializeRequestPayload } from './utils/canonicalJson';
 
 const encoder = new TextEncoder();
 

@@ -1,5 +1,5 @@
-import { SIGNING_ALGORITHM_CONFIG } from '../algorithms';
-import { normalizeHex } from '../utils/hex';
+import { SIGNING_ALGORITHM_CONFIG } from './algorithms';
+import { normalizeHex } from './utils/hex';
 export type PublicKey = {
   key: string; // hex string
   algorithm: keyof typeof SIGNING_ALGORITHM_CONFIG;

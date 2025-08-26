@@ -7,9 +7,9 @@ jest.mock('dohjs', () => ({
 }));
 
 import { verify, verifyAsyncDns, verifyAsyncJson, PREFIX } from './verify';
-import { canonicalStringify } from '../utils/canonicalJson';
-import { toHex } from '../utils/hex';
-import { SIGNING_ALGORITHM_CONFIG } from '../algorithms';
+import { canonicalStringify } from './utils/canonicalJson';
+import { toHex } from './utils/hex';
+import { SIGNING_ALGORITHM_CONFIG } from './algorithms';
 const webcrypto = globalThis.crypto;
 
 const data = 'data';

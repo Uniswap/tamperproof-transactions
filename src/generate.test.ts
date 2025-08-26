@@ -1,5 +1,5 @@
 import { generate } from './generate';
-import { normalizeHex } from '../utils/hex';
+import { normalizeHex } from './utils/hex';
 
 interface ParsedResult {
   publicKeys: {

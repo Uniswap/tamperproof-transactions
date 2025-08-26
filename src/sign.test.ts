@@ -1,5 +1,5 @@
 import { sign } from './sign';
-import { canonicalStringify } from '../utils/canonicalJson';
+import { canonicalStringify } from './utils/canonicalJson';
 
 const data = 'test data';
 const privateKeyECDSAHex =
