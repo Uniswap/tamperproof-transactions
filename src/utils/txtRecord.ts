@@ -48,5 +48,5 @@ export function processTxtRecordData(data: unknown): string {
     return parseTxtRecord(data);
   }
   // Fallback for other types
-  return data as string;
+  return String(data);
 }
