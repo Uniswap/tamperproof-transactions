@@ -1,10 +1,15 @@
+import {
+  ERROR_INVALID_HEX_LENGTH_EVEN,
+  ERROR_INVALID_HEX_STRING,
+  ERROR_NO_BASE64_DECODER,
+} from '../constants/errors';
 export function fromHex(hex: string): Uint8Array {
   const cleanHex = hex.replace(/^0x/i, '').replace(/\s/g, '');
   if (cleanHex.length % 2 !== 0) {
-    throw new Error('Invalid hex string: length must be even');
+    throw new Error(ERROR_INVALID_HEX_LENGTH_EVEN);
   }
   if (!/^[0-9a-fA-F]*$/.test(cleanHex)) {
-    throw new Error(`Invalid hex string: ${cleanHex}`);
+    throw new Error(ERROR_INVALID_HEX_STRING(cleanHex));
   }
   const out = new Uint8Array(cleanHex.length / 2);
   for (let i = 0; i < cleanHex.length; i += 2) {
@@ -49,5 +54,5 @@ export function fromBase64(base64: string): Uint8Array {
   if (NodeBuffer && typeof NodeBuffer.from === 'function') {
     return new Uint8Array(NodeBuffer.from(clean, 'base64'));
   }
-  throw new Error('No base64 decoder available in this environment');
+  throw new Error(ERROR_NO_BASE64_DECODER);
 }

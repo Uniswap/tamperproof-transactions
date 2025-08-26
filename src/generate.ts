@@ -1,4 +1,5 @@
 import { SIGNING_ALGORITHM_CONFIG } from './algorithms';
+import { ERROR_ALGORITHM_NOT_SUPPORTED } from './constants/errors';
 import { normalizeHex } from './utils/hex';
 export type PublicKey = {
   key: string; // hex string
@@ -13,9 +14,7 @@ export function generate(...publicKeys: PublicKey[]): string {
         publicKey.algorithm
       )
     ) {
-      throw new Error(
-        `Unsupported signing algorithm: ${String(publicKey.algorithm)}`
-      );
+      throw new Error(ERROR_ALGORITHM_NOT_SUPPORTED(publicKey.algorithm));
     }
 
     return {

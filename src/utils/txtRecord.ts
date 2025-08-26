@@ -1,3 +1,5 @@
+import { ERROR_INVALID_TXT_RECORD_FORMAT } from '../constants/errors';
+
 export function parseTxtRecord(buffer: ArrayBuffer | Uint8Array): string {
   const view = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   const decoder = new TextDecoder();
@@ -9,7 +11,7 @@ export function parseTxtRecord(buffer: ArrayBuffer | Uint8Array): string {
     offset += 1;
 
     if (offset + length > view.length) {
-      throw new Error('Invalid TXT record format: length exceeds buffer size');
+      throw new Error(ERROR_INVALID_TXT_RECORD_FORMAT);
     }
 
     const slice = view.subarray(offset, offset + length);

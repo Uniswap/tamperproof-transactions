@@ -5,6 +5,7 @@ import {
 } from './algorithms';
 import { toHex, fromHex } from './utils/hex';
 import { serializeRequestPayload } from './utils/canonicalJson';
+import { ERROR_ALGORITHM_NOT_SUPPORTED } from './constants/errors';
 
 const encoder = new TextEncoder();
 
@@ -17,7 +18,7 @@ export async function sign(
     typeof algorithm !== 'string' ||
     !Object.prototype.hasOwnProperty.call(SIGNING_ALGORITHM_CONFIG, algorithm)
   ) {
-    throw new Error(`Algorithm is not supported: ${String(algorithm)}`);
+    throw new Error(ERROR_ALGORITHM_NOT_SUPPORTED(algorithm));
   }
 
   const bufferData =
