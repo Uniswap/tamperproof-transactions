@@ -17,6 +17,17 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   );
 }
 
+/**
+ * Canonicalizes a JSON-like value to enable deterministic serialization.
+ *
+ * - Sorts object keys lexicographically
+ * - Drops properties with undefined values
+ * - Recursively processes objects and arrays (preserving array order)
+ * - Leaves primitives and non-plain objects unchanged
+ *
+ * Used by `canonicalStringify` and `serializeRequestPayload` to produce stable
+ * byte sequences for cryptographic signing and verification.
+ */
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map(item => canonicalize(item));
