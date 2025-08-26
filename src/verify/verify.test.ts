@@ -759,7 +759,7 @@ describe('verify.ts', () => {
       const signatureHex = toHex(signature);
 
       await expect(
-        verify(payload, signatureHex, rsaSSAKeyPair.publicKey, 'RS256')
+        verify(canonical, signatureHex, rsaSSAKeyPair.publicKey, 'RS256')
       ).resolves.toBe(true);
     });
 

@@ -29,7 +29,7 @@ Signs input using Web Crypto with the given algorithm.
 - **data**: `string | object`. If an object is provided, it is serialized to bytes using canonical JSON (sorted keys, `undefined` dropped).
 - **privateKeyHex**: PKCS#8-encoded private key as a hex string (with or without `0x`).
 - **algorithm**: one of the supported algorithm names listed above.
-- Returns a hex string signature prefixed with `0x`. For ECDSA algorithms, the signature is raw `r || s` bytes.
+- Returns a `Promise<string>` resolving to a hex string signature prefixed with `0x`. For ECDSA algorithms, the signature is raw `r || s` bytes.
 
 #### Example
 
