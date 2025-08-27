@@ -12,7 +12,11 @@ jobs:
       name: release
     permissions:
       id-token: write
-      contents: write
+      contents: read
+    concurrency:
+      group: release
+      cancel-in-progress: true
+    timeout-minutes: 20
     steps:
       - name: Load secret
         uses: 1password/load-secrets-action@581a835fb51b8e7ec56b71cf2ffddd7e68bb25e0
@@ -37,12 +41,17 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: yarn install --immutable --immutable-cache
+        run: yarn install --immutable --immutable-cache --inline-builds
      
-      - name: Release
+      - name: Build
+        run: yarn build
+     
+      - name: Test
+        run: yarn test --ci
+     
+      - name: Publish
         env:
-          NPM_CONFIG_USERCONFIG: /dev/null
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc && yarn publish
+        run: yarn npm publish --access public --non-interactive
       
