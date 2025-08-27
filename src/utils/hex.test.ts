@@ -1,4 +1,5 @@
-import { fromHex, toHex } from './hex';
+import { fromHex, toHex, fromBase64 } from './hex';
+import { Buffer as NodeBuffer } from 'node:buffer';
 
 describe('fromHex', () => {
   describe('valid hex strings', () => {
@@ -38,6 +39,50 @@ describe('fromHex', () => {
     });
   });
 
+  describe('hex strings with 0x prefix', () => {
+    it('should handle 0x prefix with lowercase', () => {
+      const result = fromHex('0x48656c6c6f');
+      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+    });
+
+    it('should handle 0X prefix with uppercase', () => {
+      const result = fromHex('0X48656c6c6f');
+      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+    });
+
+    it('should handle 0x prefix with mixed case hex', () => {
+      const result = fromHex('0x48656C6C6F');
+      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+    });
+
+    it('should handle 0x prefix with empty hex string', () => {
+      const result = fromHex('0x');
+      expect(result).toEqual(new Uint8Array([]));
+    });
+
+    it('should handle 0x prefix with all byte values', () => {
+      const result = fromHex('0x00ff8001');
+      expect(result).toEqual(new Uint8Array([0x00, 0xff, 0x80, 0x01]));
+    });
+
+    it('should handle 0x prefix with whitespace after prefix', () => {
+      const result = fromHex('0x48 65 6c 6c 6f');
+      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+    });
+
+    it('should throw error for odd length hex string with 0x prefix', () => {
+      expect(() => fromHex('0x48656c6c6')).toThrow(
+        'Invalid hex string: length must be even'
+      );
+    });
+
+    it('should throw error for partially invalid hex characters with 0x prefix', () => {
+      expect(() => fromHex('0x48656g6c6f')).toThrow(
+        'Invalid hex string: 48656g6c6f'
+      );
+    });
+  });
+
   describe('invalid hex strings', () => {
     it('should throw error for odd length hex string', () => {
       expect(() => fromHex('48656c6c6')).toThrow(
@@ -51,20 +96,20 @@ describe('fromHex', () => {
       );
     });
 
-    it('should handle partially invalid hex characters (parseInt behavior)', () => {
-      // Note: parseInt('4g', 16) returns 4, so this doesn't throw
-      const result = fromHex('48656g6c6f');
-      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6, 0x6c, 0x6f]));
+    it('should throw error for partially invalid hex characters', () => {
+      expect(() => fromHex('48656g6c6f')).toThrow(
+        'Invalid hex string: 48656g6c6f'
+      );
     });
 
     it('should throw error for completely non-hex characters', () => {
       expect(() => fromHex('hello!')).toThrow('Invalid hex string: hello!');
     });
 
-    it('should handle mixed valid/invalid hex characters (parseInt behavior)', () => {
-      // Note: parseInt('6x', 16) returns 6, so this doesn't throw
-      const result = fromHex('48656c6x6f');
-      expect(result).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6, 0x6f]));
+    it('should throw error for mixed valid/invalid hex characters', () => {
+      expect(() => fromHex('48656c6x6f')).toThrow(
+        'Invalid hex string: 48656c6x6f'
+      );
     });
   });
 });
@@ -160,5 +205,78 @@ describe('round-trip conversion', () => {
     const bytes = fromHex(emptyHex);
     const resultHex = toHex(bytes);
     expect(resultHex).toBe(emptyHex);
+  });
+
+  it('should handle round-trip with 0x prefix', () => {
+    const hexWith0x = '0x48656c6c6f776f726c64';
+    const expectedHex = '48656c6c6f776f726c64';
+    const bytes = fromHex(hexWith0x);
+    const resultHex = toHex(bytes);
+    expect(resultHex).toBe(expectedHex);
+  });
+
+  it('should convert bytes to hex and back with 0x prefix input', () => {
+    const originalBytes = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]);
+    const hex = toHex(originalBytes);
+    const hexWith0x = `0x${hex}`;
+    const resultBytes = fromHex(hexWith0x);
+    expect(resultBytes).toEqual(originalBytes);
+  });
+});
+
+describe('fromBase64', () => {
+  let originalAtob: ((s: string) => string) | undefined;
+  type BufferType = typeof NodeBuffer;
+  let originalBuffer: BufferType | undefined;
+
+  beforeEach(() => {
+    originalAtob = (globalThis as { atob?: (s: string) => string }).atob;
+    // Capture Buffer off globalThis in case it is present
+    originalBuffer = (globalThis as { Buffer?: BufferType }).Buffer;
+  });
+
+  afterEach(() => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      originalAtob;
+    (globalThis as { Buffer?: BufferType | undefined }).Buffer = originalBuffer;
+  });
+
+  it('decodes using Node Buffer when atob is not available', () => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      undefined;
+    // Ensure Buffer exists (Node environment)
+    expect(typeof (globalThis as { Buffer?: BufferType }).Buffer).toBe(
+      'function'
+    );
+
+    const bytes = fromBase64('SGVsbG8='); // "Hello"
+    expect(bytes).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+  });
+
+  it('strips whitespace and newlines before decoding', () => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      undefined;
+    const withWhitespace = 'S GV s\n bG8=  ';
+    const bytes = fromBase64(withWhitespace);
+    expect(bytes).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+  });
+
+  it('uses atob when available (browser-like environment)', () => {
+    // Provide an atob stub that decodes base64 to a binary string
+    (globalThis as { atob?: (s: string) => string }).atob = (
+      s: string
+    ): string => NodeBuffer.from(s, 'base64').toString('binary');
+
+    const bytes = fromBase64('SGVsbG8=');
+    expect(bytes).toEqual(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+  });
+
+  it('throws when neither atob nor Buffer are available', () => {
+    (globalThis as { atob?: (s: string) => string | undefined }).atob =
+      undefined;
+    (globalThis as { Buffer?: BufferType | undefined }).Buffer = undefined;
+    expect(() => fromBase64('SGVsbG8=')).toThrow(
+      'No base64 decoder available in this environment'
+    );
   });
 });
