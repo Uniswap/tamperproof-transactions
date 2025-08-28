@@ -9,6 +9,12 @@ export const ERROR_NO_TXT_WITH_PREFIX_FOR_HOST = (
   host: string
 ): string => `No TXT record found with prefix ${prefix} for host ${host}`;
 
+export const ERROR_MULTIPLE_TXT_WITH_PREFIX_FOR_HOST = (
+  prefix: string,
+  host: string
+): string =>
+  `Multiple TXT records found with prefix ${prefix} for host ${host}. Only one is allowed.`;
+
 export const ERROR_TWIST_PATH_TOO_LONG = 'TWIST path too long';
 
 export const ERROR_MANIFEST_HTTPS_ONLY = 'Manifest must be fetched over HTTPS';

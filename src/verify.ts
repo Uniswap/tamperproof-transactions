@@ -4,6 +4,19 @@ import {
   SIGNING_ALGORITHM_CONFIG,
   SIGNING_ALGORITHM_IMPORT_PARAMS,
 } from './algorithms';
+import {
+  ERROR_ALGORITHM_NOT_SUPPORTED,
+  ERROR_MANIFEST_CONTENT_TYPE,
+  ERROR_MANIFEST_FETCH_FAILED,
+  ERROR_MANIFEST_HTTPS_ONLY,
+  ERROR_MANIFEST_TOO_LARGE,
+  ERROR_MULTIPLE_PUBLIC_KEYS_WITH_ID,
+  ERROR_MULTIPLE_TXT_WITH_PREFIX_FOR_HOST,
+  ERROR_NO_TXT_RECORDS_FOR_HOST,
+  ERROR_NO_TXT_WITH_PREFIX_FOR_HOST,
+  ERROR_PUBLIC_KEY_ID_NOT_FOUND,
+  ERROR_TWIST_PATH_TOO_LONG,
+} from './constants/errors';
 import { fromHex } from './utils/hex';
 import { processTxtRecordData } from './utils/txtRecord';
 import { DohResolver } from 'dohjs';
@@ -34,31 +47,32 @@ export async function verifyAsyncDns(
   );
 
   if (!response.answers || response.answers.length === 0) {
-    throw new Error(`No TXT records found for host ${host}`);
+    throw new Error(ERROR_NO_TXT_RECORDS_FOR_HOST(host));
   }
 
   let twistRecord: string | undefined;
 
-  // Search through all TXT record answers for the first one that starts with the prefix
+  // Scan all TXT records; capture the first with PREFIX and throw if another is found
   for (const answer of response.answers) {
     const recordData = processTxtRecordData(answer.data);
 
     if (recordData.startsWith(PREFIX)) {
-      twistRecord = recordData.slice(PREFIX.length);
-      break;
+      if (twistRecord) {
+        throw new Error(ERROR_MULTIPLE_TXT_WITH_PREFIX_FOR_HOST(PREFIX, host));
+      } else {
+        twistRecord = recordData.slice(PREFIX.length);
+      }
     }
   }
 
   if (!twistRecord) {
-    throw new Error(
-      `No TXT record found with prefix ${PREFIX} for host ${host}`
-    );
+    throw new Error(ERROR_NO_TXT_WITH_PREFIX_FOR_HOST(PREFIX, host));
   }
 
   // Normalize and bound TWIST path; encode path segments
   twistRecord = twistRecord.replace(/^\/+/, '');
   if (twistRecord.length > MAX_TWIST_PATH) {
-    throw new Error('TWIST path too long');
+    throw new Error(ERROR_TWIST_PATH_TOO_LONG);
   }
   const encodedPath = twistRecord
     .split('/')
@@ -77,7 +91,7 @@ export async function verifyAsyncJson(
   id: string
 ): Promise<boolean> {
   if (url.protocol !== 'https:') {
-    throw new Error('Manifest must be fetched over HTTPS');
+    throw new Error(ERROR_MANIFEST_HTTPS_ONLY);
   }
 
   const controller = new AbortController();
@@ -94,17 +108,17 @@ export async function verifyAsyncJson(
   }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch manifest: HTTP ${response.status}`);
+    throw new Error(ERROR_MANIFEST_FETCH_FAILED(response.status));
   }
 
   const ct = response.headers.get('content-type') || '';
   if (!/^application\/json(?:;|$)/i.test(ct)) {
-    throw new Error('Manifest Content-Type must be application/json');
+    throw new Error(ERROR_MANIFEST_CONTENT_TYPE);
   }
 
   const cl = response.headers.get('content-length');
   if (cl && Number(cl) > MAX_MANIFEST_BYTES) {
-    throw new Error('Manifest too large');
+    throw new Error(ERROR_MANIFEST_TOO_LARGE);
   }
 
   const data = (await response.json()) as {
@@ -117,13 +131,11 @@ export async function verifyAsyncJson(
   const matchingKeys = data.publicKeys.filter(pk => pk.id === id.toString());
 
   if (matchingKeys.length === 0) {
-    throw new Error(`Public key with id ${id} not found`);
+    throw new Error(ERROR_PUBLIC_KEY_ID_NOT_FOUND(id));
   }
 
   if (matchingKeys.length > 1) {
-    throw new Error(
-      `Multiple public keys found with id ${id}. Key IDs must be unique.`
-    );
+    throw new Error(ERROR_MULTIPLE_PUBLIC_KEYS_WITH_ID(id));
   }
 
   const publicKey = matchingKeys[0];
@@ -134,7 +146,7 @@ export async function verifyAsyncJson(
       publicKey.alg
     )
   ) {
-    throw new Error(`Algorithm is not supported: ${String(publicKey.alg)}`);
+    throw new Error(ERROR_ALGORITHM_NOT_SUPPORTED(publicKey.alg));
   }
   const algorithmKey =
     publicKey.alg as keyof typeof SIGNING_ALGORITHM_IMPORT_PARAMS;
@@ -161,7 +173,7 @@ export async function verify(
   const signatureBytes = fromHex(signature);
 
   if (!Object.prototype.hasOwnProperty.call(SIGNING_ALGORITHM_CONFIG, alg)) {
-    throw new Error(`Algorithm is not supported: ${String(alg)}`);
+    throw new Error(ERROR_ALGORITHM_NOT_SUPPORTED(alg));
   }
   const algConfig: SigningAlgorithmConfig = SIGNING_ALGORITHM_CONFIG[alg];
 
