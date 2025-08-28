@@ -180,8 +180,8 @@ describe('verify.ts', () => {
       );
     });
 
-    it('should handle mixed record types with Buffer containing multiple substrings', async () => {
-      // First record without prefix, second record with prefix in Buffer format
+    it('should handle mixed record types selecting the first TWIST record only', async () => {
+      // First record without prefix, second record with prefix in Buffer format; third without TWIST
       const buffer = Buffer.concat([
         Buffer.from([6]), // length of "TWIST="
         Buffer.from('TWIST='),
@@ -193,7 +193,7 @@ describe('verify.ts', () => {
         answers: [
           { data: 'OTHER_PREFIX=ignore-this' },
           { data: buffer }, // Should find this one
-          { data: 'TWIST=backup' }, // Should not reach this
+          { data: 'IGNORED=backup' }, // Not TWIST
         ],
       });
 
@@ -213,6 +213,18 @@ describe('verify.ts', () => {
       await expect(
         verifyAsyncDns('data', 'signature', 'example.com', '1')
       ).rejects.toThrow(); // Will fail at crypto step, but parsing succeeded
+    });
+
+    it('throws when multiple TWIST records are present', async () => {
+      mockQuery.mockResolvedValue({
+        answers: [{ data: 'TWIST=one' }, { data: 'TWIST=two' }],
+      });
+
+      await expect(
+        verifyAsyncDns('data', 'signature', 'example.com', '1')
+      ).rejects.toThrow(
+        `Multiple TXT records found with prefix ${PREFIX} for host example.com. Only one is allowed.`
+      );
     });
 
     it('sanitizes leading slashes and encodes TWIST path segments', async () => {
