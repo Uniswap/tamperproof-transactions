@@ -3,9 +3,13 @@ on:
   # manual trigger
   workflow_dispatch:
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   deploy:
-    name: release   
+    name: release
     runs-on:
       group: npm-deploy
     environment:
@@ -15,7 +19,7 @@ jobs:
       contents: write
     steps:
       - name: Load secret
-        uses: 1password/load-secrets-action@581a835fb51b8e7ec56b71cf2ffddd7e68bb25e0
+        uses: 1password/load-secrets-action@13f58eec611f8e5db52ec16247f58c508398f3e6 # v3.0.0
         with:
           # Export loaded secrets as environment variables
           export-env: true
@@ -27,22 +31,38 @@ jobs:
           NPM_TOKEN: op://npm-deploy/npm-runner-token/secret
       
       - name: Checkout
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       
       - name: Setup Node
-        uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           cache: yarn
-          node-version: "20.x"
+          node-version: "20.17.0"
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: yarn install --immutable --immutable-cache
-     
+        run: yarn install --immutable --immutable-cache --check-cache --non-interactive
+
+      - name: Build
+        run: yarn build
+
+      - name: Test
+        run: yarn test --ci
+
+      - name: Decide npm tag
+        id: tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$VERSION" == *-* ]]; then
+            PREID=$(echo "$VERSION" | cut -d'-' -f2 | cut -d'.' -f1)
+            echo "tag=$PREID" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
       - name: Release
         env:
-          NPM_CONFIG_USERCONFIG: /dev/null
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc && yarn publish
-      
+        run: |
+          npm config set //registry.npmjs.org/:_authToken "${NODE_AUTH_TOKEN}"
+          npm publish --provenance --access public --tag "${{ steps.tag.outputs.tag }}"
