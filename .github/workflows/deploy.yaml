@@ -5,7 +5,7 @@ on:
 
 concurrency:
   group: release
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -17,9 +17,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    concurrency:
-      group: release
-      cancel-in-progress: true
+    
     timeout-minutes: 20
     steps:
       - name: Load secret
