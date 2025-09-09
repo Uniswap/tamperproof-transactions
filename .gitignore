@@ -19,3 +19,6 @@ temp/
 
 # Environment variables
 .env
+
+# Package files
+*.tgz
