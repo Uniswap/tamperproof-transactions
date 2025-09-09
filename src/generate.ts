@@ -1,6 +1,6 @@
-import { SIGNING_ALGORITHM_CONFIG } from './algorithms';
-import { ERROR_ALGORITHM_NOT_SUPPORTED } from './constants/errors';
-import { normalizeHex } from './utils/hex';
+import { SIGNING_ALGORITHM_CONFIG } from './algorithms.js';
+import { ERROR_ALGORITHM_NOT_SUPPORTED } from './constants/errors.js';
+import { normalizeHex } from './utils/hex.js';
 export type PublicKey = {
   key: string; // hex string
   algorithm: keyof typeof SIGNING_ALGORITHM_CONFIG;

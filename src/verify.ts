@@ -1,9 +1,9 @@
-import { webcrypto } from './utils/webcrypto';
+import { webcrypto } from './utils/webcrypto.js';
 import {
   SigningAlgorithmConfig,
   SIGNING_ALGORITHM_CONFIG,
   SIGNING_ALGORITHM_IMPORT_PARAMS,
-} from './algorithms';
+} from './algorithms.js';
 import {
   ERROR_ALGORITHM_NOT_SUPPORTED,
   ERROR_MANIFEST_CONTENT_TYPE,
@@ -16,9 +16,9 @@ import {
   ERROR_NO_TXT_WITH_PREFIX_FOR_HOST,
   ERROR_PUBLIC_KEY_ID_NOT_FOUND,
   ERROR_TWIST_PATH_TOO_LONG,
-} from './constants/errors';
-import { fromHex } from './utils/hex';
-import { processTxtRecordData } from './utils/txtRecord';
+} from './constants/errors.js';
+import { fromHex } from './utils/hex.js';
+import { processTxtRecordData } from './utils/txtRecord.js';
 import { DohResolver } from 'dohjs';
 
 export const PREFIX = 'TWIST=';

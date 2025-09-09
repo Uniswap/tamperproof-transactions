@@ -7,10 +7,10 @@
     "lib": ["esnext", "dom"],
     "declaration": true,
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "src"
   }
 }

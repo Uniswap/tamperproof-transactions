@@ -1,11 +1,11 @@
-import { webcrypto } from './utils/webcrypto';
+import { webcrypto } from './utils/webcrypto.js';
 import {
   SIGNING_ALGORITHM_CONFIG,
   SIGNING_ALGORITHM_IMPORT_PARAMS,
-} from './algorithms';
-import { toHex, fromHex } from './utils/hex';
-import { serializeRequestPayload } from './utils/canonicalJson';
-import { ERROR_ALGORITHM_NOT_SUPPORTED } from './constants/errors';
+} from './algorithms.js';
+import { toHex, fromHex } from './utils/hex.js';
+import { serializeRequestPayload } from './utils/canonicalJson.js';
+import { ERROR_ALGORITHM_NOT_SUPPORTED } from './constants/errors.js';
 
 const encoder = new TextEncoder();
 const PRIVATE_KEY_FORMAT = 'pkcs8';
