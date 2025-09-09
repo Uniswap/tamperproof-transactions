@@ -1,4 +1,4 @@
-const webcrypto = globalThis.crypto;
+import { webcrypto } from './utils/webcrypto';
 import {
   SigningAlgorithmConfig,
   SIGNING_ALGORITHM_CONFIG,
