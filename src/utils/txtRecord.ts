@@ -1,4 +1,4 @@
-import { ERROR_INVALID_TXT_RECORD_FORMAT } from '../constants/errors';
+import { ERROR_INVALID_TXT_RECORD_FORMAT } from '../constants/errors.js';
 
 /**
  * Decodes DNS TXT record wire-format bytes (RFC 1035) into a UTF-8 string.

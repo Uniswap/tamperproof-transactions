@@ -19,8 +19,9 @@ import {
 } from './constants/errors.js';
 import { fromHex } from './utils/hex.js';
 import { processTxtRecordData } from './utils/txtRecord.js';
-import { DohResolver } from 'dohjs';
+import dohjs from 'dohjs';
 
+const { DohResolver } = dohjs;
 export const PREFIX = 'TWIST=';
 const quadOneResolver = new DohResolver('https://1.1.1.1/dns-query');
 const TIMEOUT = 1000;
@@ -33,7 +34,7 @@ export async function verifyAsyncDns(
   signature: string,
   host: string,
   id: string,
-  thisResolver: DohResolver = quadOneResolver
+  thisResolver: InstanceType<typeof DohResolver> = quadOneResolver
 ): Promise<boolean> {
   // Use DNS over HTTPS to resolve TXT records
   const response = await thisResolver.query(
