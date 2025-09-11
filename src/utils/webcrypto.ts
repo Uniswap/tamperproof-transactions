@@ -1,4 +1,4 @@
-import { webcrypto as nodeWebcrypto } from 'node:crypto';
+import { webcrypto as nodeWebcrypto } from 'crypto';
 
 function resolveWebcrypto(): Crypto {
   if (globalThis.crypto?.subtle) return globalThis.crypto;

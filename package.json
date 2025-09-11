@@ -1,9 +1,14 @@
 {
   "name": "@uniswap/tamperproof-transactions",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "type": "module",
-  "main": "dist/index.cjs",
-  "types": "dist/index.d.ts",
+  "main": "./lib/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "lib/**"
+  ],
   "repository": "git@github.com:Uniswap/tamperproof-transactions.git",
   "author": "Uniswap Labs Security <security@uniswap.org>",
   "license": "MIT",
@@ -25,8 +30,10 @@
     "typescript": "^5.7.3"
   },
   "scripts": {
-    "prebuild": "tsc -p tsconfig.browserify.json",
-    "build": "browserify lib/index.js --standalone twist -o dist/twist.js && terser dist/twist.js --compress --mangle --output=dist/twist.min.js",
+    "build:cjs": "tsc -p tsconfig.browserify.json",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:browser": "browserify lib/index.js --standalone twist -o dist/twist.js && terser dist/twist.js --compress --mangle --output=dist/twist.min.js",
+    "build": "yarn build:cjs && yarn build:esm && yarn build:browser",
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
@@ -37,11 +44,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js",
+      "require": "./lib/index.js"
     }
   },
   "browser": {
-    "./lib/utils/webcrypto.js": "./lib/utils/crypto-browser-shim.js"
+    "./lib/utils/webcrypto.js": "./lib/utils/crypto-browser-shim.js",
+    "node:crypto": false
   },
   "publishConfig": {
     "access": "public",
