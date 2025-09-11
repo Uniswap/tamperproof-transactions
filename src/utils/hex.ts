@@ -2,7 +2,7 @@ import {
   ERROR_INVALID_HEX_LENGTH_EVEN,
   ERROR_INVALID_HEX_STRING,
   ERROR_NO_BASE64_DECODER,
-} from '../constants/errors';
+} from '../constants/errors.js';
 
 /**
  * Decodes a hex string into bytes.
