@@ -5,7 +5,7 @@ on:
 
 concurrency:
   group: release
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -16,7 +16,9 @@ jobs:
       name: release
     permissions:
       id-token: write
-      contents: write
+      contents: read
+    
+    timeout-minutes: 20
     steps:
       - name: Load secret
         uses: 1password/load-secrets-action@13f58eec611f8e5db52ec16247f58c508398f3e6 # v3.0.0
